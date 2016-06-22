@@ -1,0 +1,13 @@
+apply plugin: 'com.android.library'
+//apply plugin: 'java'
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "22.0.1"
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+}
