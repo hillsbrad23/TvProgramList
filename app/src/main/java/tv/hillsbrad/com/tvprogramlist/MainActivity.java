@@ -180,16 +180,12 @@ public class MainActivity extends AppCompatActivity {
 
                                                 // there is bug, adjust view must use correct program object
                                                 textView = (TextView) sliceLayout.getChildAt(sliceLayout.getChildCount()-1);
+                                                Program textViewProgram = (Program) textView.getTag();
                                                 params = textView.getLayoutParams();
-                                                params.width = Utils.getRelatedProgramSliceWidth(program,
+                                                params.width = Utils.getRelatedProgramSliceWidth(textViewProgram,
                                                         mTimeController.getViewStartDate(),
                                                         mTimeController.getViewEndDate());
                                                 textView.requestLayout();
-
-                                                Log.d("alexx", program.getTitle() + " adjust width=" + params.width +
-                                                        "/" + program.getStartDate() + "/" + program.getEndDate() +
-                                                        "/" + mTimeController.getViewStartDate() + "/" + mTimeController.getViewEndDate());
-
                                                 //https://tw.movies.yahoo.com/service/rest/?method=ymv.tv.getList&gid=5&date=2016-06-24&h=18
                                                 //existed: 教育文化頻道
                                                 //120 / 華視新住民新聞-越南語(普) / 10 / Fri Jun 24 19:00:00 GMT+08:00 2016 / Fri Jun 24 19:10:00 GMT+08:00 2016
@@ -208,6 +204,7 @@ public class MainActivity extends AppCompatActivity {
                                             textView.setLayoutParams(params);
                                             textView.setHorizontallyScrolling(true);
                                             textView.setSingleLine(true);
+                                            textView.setTag(program);
 
                                             if (next) {
                                                 sliceLayout.addView(textView);
