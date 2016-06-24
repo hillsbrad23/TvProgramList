@@ -57,14 +57,17 @@ public class Utils {
     public static int getRelatedProgramSliceWidth(Program program, Date viewStartDate, Date viewEndDate) {
         int relatedRuntime = program.getRuntime();
 
+        Log.d("alexx", "runtime=" + relatedRuntime);
         if (program.getStartDate().getTime() < viewStartDate.getTime()) {
             long pre = viewStartDate.getTime() - program.getStartDate().getTime();
             relatedRuntime -= TimeUnit.MILLISECONDS.toMinutes(pre);
+            Log.d("alexx", " -= " + TimeUnit.MILLISECONDS.toMinutes(pre));
         }
 
         if (program.getEndDate().getTime() > viewEndDate.getTime()) {
             long post = program.getEndDate().getTime() - viewEndDate.getTime();
             relatedRuntime -= TimeUnit.MILLISECONDS.toMinutes(post);
+            Log.d("alexx", " -= " + TimeUnit.MILLISECONDS.toMinutes(post));
         }
 
         return getProgramSliceWidth(relatedRuntime);

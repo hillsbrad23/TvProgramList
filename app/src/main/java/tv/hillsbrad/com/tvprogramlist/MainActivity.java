@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageButton mPreviousButton;
     private ImageButton mNextButton;
+    private boolean mIsProcessing;
 
     private TimeController mTimeController;
     private ViewController mViewController;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
 //        });
 
         final Calendar calendar = Calendar.getInstance();
+
         mTimeController = new TimeController();
         mTimeController.setTime(YahooTvTimeParser.convert2StartDate(calendar));
 
@@ -76,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mIsProcessing = true;
         search(true);
 
     }
@@ -95,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                                         Utils.getSliceBacisWidth(MainActivity.this), ViewGroup.LayoutParams.WRAP_CONTENT);
                                 int currentHour = mTimeController.getCurrentHourOfDay();
 
-                                mTimeController.resetSearchTime();
+                                mTimeController.resetSearchTime(channelGroup.getStartDate(), channelGroup.getEndDate());
                                 Log.d("alexx", "viewStartTime " + mTimeController.getViewStartDate());
                                 Log.d("alexx", "viewEndTime   " + mTimeController.getViewEndDate());
 
@@ -148,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
                                     for (Program program : channel.getPrograms()) {
 
                                         if (count == 0 && next && sliceLayout.getChildCount() > 0 &&
-                                                program.getStartDate().getTime() < channelGroup.getStartDate().getTime()) {
+                                            program.getStartDate().getTime() < channelGroup.getStartDate().getTime()) {
                                             // if need to merge privious item
                                             textView = (TextView) sliceLayout.getChildAt(sliceLayout.getChildCount()-1);
                                             params = textView.getLayoutParams();
@@ -156,8 +159,8 @@ public class MainActivity extends AppCompatActivity {
                                                     mTimeController.getViewStartDate(),
                                                     mTimeController.getViewEndDate());
                                             textView.requestLayout();
-                                            Log.d("alexx", "\tnext exist");
-                                            Log.d("alexx", "\t" + params.width + " / " + program.toString());
+                                            Log.d("alexx", "    next exist");
+                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
                                         } else if (count == (totalCount -1) && !next && sliceLayout.getChildCount() > count &&
                                                 program.getEndDate().getTime() >
                                                         (channelGroup.getStartDate().getTime() + YahooTvConstant.YAHOO_SEARCH_TIME * Utils.MILLISECOND_IN_HOUR)) {
@@ -169,18 +172,39 @@ public class MainActivity extends AppCompatActivity {
                                                     mTimeController.getViewEndDate());
                                             textView.requestLayout();
 
-                                            Log.d("alexx", "\tprevious exist");
-                                            Log.d("alexx", "\t" + params.width + " / " + program.toString());
+                                            Log.d("alexx", "    previous exist");
+                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
                                         } else {
+                                            if (count == 0 && next && sliceLayout.getChildCount() > 0 &&
+                                                    program.getStartDate().getTime() > channelGroup.getStartDate().getTime()) {
+
+                                                // there is bug, adjust view must use correct program object
+                                                textView = (TextView) sliceLayout.getChildAt(sliceLayout.getChildCount()-1);
+                                                params = textView.getLayoutParams();
+                                                params.width = Utils.getRelatedProgramSliceWidth(program,
+                                                        mTimeController.getViewStartDate(),
+                                                        mTimeController.getViewEndDate());
+                                                textView.requestLayout();
+
+                                                Log.d("alexx", program.getTitle() + " adjust width=" + params.width +
+                                                        "/" + program.getStartDate() + "/" + program.getEndDate() +
+                                                        "/" + mTimeController.getViewStartDate() + "/" + mTimeController.getViewEndDate());
+
+                                                //https://tw.movies.yahoo.com/service/rest/?method=ymv.tv.getList&gid=5&date=2016-06-24&h=18
+                                                //existed: 教育文化頻道
+                                                //120 / 華視新住民新聞-越南語(普) / 10 / Fri Jun 24 19:00:00 GMT+08:00 2016 / Fri Jun 24 19:10:00 GMT+08:00 2016
+                                                //300 / 動感科技-機器人(普) / 25 / Fri Jun 24 19:10:00 GMT+08:00 2016 / Fri Jun 24 19:35:00 GMT+08:00 2016
+                                                //300 / 動感科技-機器人(普) / 25 / Fri Jun 24 19:35:00 GMT+08:00 2016 / Fri Jun 24 20:00:00 GMT+08:00 2016
+                                            }
+
                                             params = new ViewGroup.LayoutParams(
                                                     Utils.getRelatedProgramSliceWidth(program,
                                                             mTimeController.getViewStartDate(),
                                                             mTimeController.getViewEndDate()),
                                                     ViewGroup.LayoutParams.WRAP_CONTENT);
                                             textView = new TextView(MainActivity.this);
-                                            textView.setText(program.getTitle());
+                                            textView.setText(program.getTitle() + "/" + program.getTime());
                                             textView.setBackground(getResources().getDrawable(R.drawable.program_textview, null));
-//                                            textView.setBackgroundColor(Utils.getProgramSliceColor(MainActivity.this, sliceLayout.getChildCount()));
                                             textView.setLayoutParams(params);
                                             textView.setHorizontallyScrolling(true);
                                             textView.setSingleLine(true);
@@ -191,12 +215,15 @@ public class MainActivity extends AppCompatActivity {
                                                 sliceLayout.addView(textView, count);
                                             }
 
-                                            Log.d("alexx", "\t" + params.width + " / " + program.toString());
+                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
                                         }
                                         count++;
                                     }
                                     mViewController.add(channel.getTitle(), sliceLayout);
                                 }
+                                mIsProcessing = false;
+                                mPreviousButton.setEnabled(true);
+                                mNextButton.setEnabled(true);
                             }
                         });
                     }
@@ -204,18 +231,27 @@ public class MainActivity extends AppCompatActivity {
             }.start();
         } else {
             Log.d("alexx", "already search / " + mTimeController.getCalendar().getTime());
+            mIsProcessing = false;
+            mPreviousButton.setEnabled(true);
+            mNextButton.setEnabled(true);
         }
 
 
     }
 
     public void searchMore(boolean next) {
-        if (next) {
-            mTimeController.addTime(YahooTvConstant.YAHOO_SEARCH_TIME);
-        } else {
-            mTimeController.addTime(YahooTvConstant.YAHOO_SEARCH_TIME * -1);
+        if (!mIsProcessing) {
+            mIsProcessing = true;
+            mPreviousButton.setEnabled(false);
+            mNextButton.setEnabled(false);
+
+            if (next) {
+                mTimeController.addTime(YahooTvConstant.YAHOO_SEARCH_TIME);
+            } else {
+                mTimeController.addTime(YahooTvConstant.YAHOO_SEARCH_TIME * -1);
+            }
+            search(next);
         }
-        search(next);
     }
 
     @Override

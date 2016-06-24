@@ -31,7 +31,7 @@ public class Program {
                 calendar.get(Calendar.HOUR_OF_DAY));
     }
 
-    public void convertTimezone(String time, int year, int month, int day, int hour) {
+    private void convertTimezone(String time, int year, int month, int day, int hour) {
         Calendar calendar = Calendar.getInstance();
 
         String[] duration = time.split("~");

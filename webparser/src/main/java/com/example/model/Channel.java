@@ -1,6 +1,7 @@
 package com.example.model;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by alex on 6/8/16.
@@ -24,5 +25,9 @@ public class Channel {
 
     public ArrayList<Program> getPrograms() {
         return mPrograms;
+    }
+
+    public void processYahooTimeError(Date startDate) {
+
     }
 }

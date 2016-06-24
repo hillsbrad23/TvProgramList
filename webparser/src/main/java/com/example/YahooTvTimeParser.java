@@ -38,7 +38,7 @@ public class YahooTvTimeParser {
             Elements elements = doc.getElementsByClass("channel");
 
             ChannelGroup channelGroup = new ChannelGroup();
-            channelGroup.setStartDate(convert2StartDate(calendar));
+            channelGroup.setProcessDate(convert2StartDate(calendar));
             int channelCount = 0;
             for (Element element: elements) {
 
@@ -53,6 +53,8 @@ public class YahooTvTimeParser {
                                                   calendar);
                     channel.addProgram(program);
                 }
+
+                channel.processYahooTimeError(channelGroup.getStartDate());
             }
 
             return channelGroup;

@@ -1,6 +1,9 @@
 package com.example.model;
 
+import com.example.YahooTvConstant;
+
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -9,6 +12,7 @@ import java.util.Date;
 public class ChannelGroup {
     private ArrayList<Channel> channels = new ArrayList<Channel>();
     private Date mStartDate;
+    private Date mEndDate;
 
     public void addChannel(Channel channel) {
         channels.add(channel);
@@ -22,7 +26,16 @@ public class ChannelGroup {
         return mStartDate;
     }
 
-    public void setStartDate(Date date) {
-        mStartDate = date;
+    public Date getEndDate() {
+        return mEndDate;
+    }
+
+    public void setProcessDate(Date startDate) {
+        mStartDate = startDate;
+
+        Calendar endCal = Calendar.getInstance();
+        endCal.setTime(startDate);
+        endCal.add(Calendar.HOUR, YahooTvConstant.YAHOO_SEARCH_TIME);
+        mEndDate = endCal.getTime();
     }
 }

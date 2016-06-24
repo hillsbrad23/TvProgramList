@@ -47,25 +47,39 @@ public class TimeController {
         return false;
     }
 
-    public void resetSearchTime() {
+    public void resetSearchTime(Date startDate, Date endDate) {
         if (mViewEndDate == null) {
-            resetEndDate();
+            mViewEndDate = endDate;
+            return;
         }
 
-        if (mCalendar.getTime().getTime() < mViewStartDate.getTime()) {
-            mViewStartDate = mCalendar.getTime();
-        } else if ((mCalendar.getTime().getTime() + YahooTvConstant.YAHOO_SEARCH_TIME *
-                Utils.MILLISECOND_IN_HOUR) > mViewEndDate.getTime()) {
-            resetEndDate();
+        if (startDate.getTime() < mViewStartDate.getTime()) {
+            mViewStartDate = startDate;
+        }
+        if (endDate.getTime() > mViewEndDate.getTime()) {
+            mViewEndDate = endDate;
         }
     }
 
-    private void resetEndDate() {
-        Calendar endCal = Calendar.getInstance();
-        endCal.setTime(mCalendar.getTime());
-        endCal.add(Calendar.HOUR, YahooTvConstant.YAHOO_SEARCH_TIME);
-        mViewEndDate = endCal.getTime();
-    }
+//    public void resetSearchTime() {
+//        if (mViewEndDate == null) {
+//            resetEndDate();
+//        }
+//
+//        if (mCalendar.getTime().getTime() < mViewStartDate.getTime()) {
+//            mViewStartDate = mCalendar.getTime();
+//        } else if ((mCalendar.getTime().getTime() + YahooTvConstant.YAHOO_SEARCH_TIME *
+//                Utils.MILLISECOND_IN_HOUR) > mViewEndDate.getTime()) {
+//            resetEndDate();
+//        }
+//    }
+//
+//    private void resetEndDate() {
+//        Calendar endCal = Calendar.getInstance();
+//        endCal.setTime(mCalendar.getTime());
+//        endCal.add(Calendar.HOUR, YahooTvConstant.YAHOO_SEARCH_TIME);
+//        mViewEndDate = endCal.getTime();
+//    }
 
     public Date getViewStartDate() {
         return mViewStartDate;
