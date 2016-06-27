@@ -18,11 +18,12 @@ import com.example.model.ChannelGroup;
 import com.example.model.Program;
 
 import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
-    private LinearLayout mChannelLayout;
-    private LinearLayout mProgramLayout;
+    private LinearLayout mChannelTitleLayout;
+    private LinearLayout mProgramDurationLayout;
     private LinearLayout mTimeSliceLayout;
 
     private ImageButton mPreviousButton;
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TimeController mTimeController;
     private ViewController mViewController;
+    private ModelController mModelController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,14 +56,14 @@ public class MainActivity extends AppCompatActivity {
 
         mTimeController = new TimeController();
         mTimeController.setTime(YahooTvTimeParser.convert2StartDate(calendar));
-
         mViewController = new ViewController();
+        mModelController = new ModelController();
 
-        mChannelLayout = (LinearLayout) findViewById(R.id.channel_layout);
+        mChannelTitleLayout = (LinearLayout) findViewById(R.id.channel_title_layout);
         TextView textView = new TextView(MainActivity.this);
-        mChannelLayout.addView(textView);
-        mProgramLayout = (LinearLayout) findViewById(R.id.programLayout);
-        mTimeSliceLayout = (LinearLayout) findViewById(R.id.timeSliceLayout);
+        mChannelTitleLayout.addView(textView);
+        mProgramDurationLayout = (LinearLayout) findViewById(R.id.program_duration_layout);
+        mTimeSliceLayout = (LinearLayout) findViewById(R.id.time_slice_layout);
 
         mPreviousButton = (ImageButton) findViewById(R.id.previous_button);
         mPreviousButton.setOnClickListener(new View.OnClickListener() {
@@ -84,156 +86,158 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void search(final boolean next) {
-        if (!mTimeController.isSearched()) {
+//        if (!mTimeController.isSearched()) {
             new Thread() {
                 public void run() {
                     final ChannelGroup channelGroup = YahooTvTimeParser.parse(MainActivity.this,
                             YahooTvConstant.Group.FIVE, mTimeController.getCalendar());
+                    mModelController.attach(channelGroup);
 
-                    if (channelGroup != null) {
-                        runOnUiThread(new Runnable() {
-                            public void run() {
 
-                                ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
-                                        Utils.getSliceBacisWidth(MainActivity.this), ViewGroup.LayoutParams.WRAP_CONTENT);
-                                int currentHour = mTimeController.getCurrentHourOfDay();
+                    refreshUI();
 
-                                mTimeController.resetSearchTime(channelGroup.getStartDate(), channelGroup.getEndDate());
-                                Log.d("alexx", "viewStartTime " + mTimeController.getViewStartDate());
-                                Log.d("alexx", "viewEndTime   " + mTimeController.getViewEndDate());
-
-                                TextView textView = new TextView(MainActivity.this);
-                                textView.setText(Utils.toHourOfDayString(currentHour));
-                                textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, currentHour));
-                                textView.setLayoutParams(params);
-                                if (next) {
-                                    mTimeSliceLayout.addView(textView);
-                                } else {
-                                    mTimeSliceLayout.addView(textView, 0);
-                                }
-
-                                textView = new TextView(MainActivity.this);
-                                textView.setText(Utils.toHourOfDayString(currentHour + 1));
-                                textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, currentHour + 1));
-                                textView.setLayoutParams(params);
-                                if (next) {
-                                    mTimeSliceLayout.addView(textView);
-                                } else {
-                                    mTimeSliceLayout.addView(textView, 1);
-                                }
-
-                                int channelCount = 0;
-                                for (Channel channel : channelGroup.getChannels()) {
-                                    int bg = (channelCount++ % 2 == 0) ? R.color.programBg1 : R.color.programBg2;
-                                    bg = getResources().getColor(bg, null);
-
-                                    LinearLayout sliceLayout = null;
-                                    // channel title
-                                    if (mViewController.containsChannel(channel.getTitle())) {
-                                        sliceLayout = mViewController.getLayout(channel.getTitle());
-                                        Log.d("alexx", "existed: " + channel.getTitle());
-                                    } else {
-                                        textView = new TextView(MainActivity.this);
-                                        textView.setText(channel.getTitle());
-                                        textView.setBackgroundColor(bg);
-                                        mChannelLayout.addView(textView);
-
-                                        sliceLayout = new LinearLayout(MainActivity.this);
-                                        sliceLayout.setOrientation(LinearLayout.HORIZONTAL);
-                                        mProgramLayout.addView(sliceLayout);
-
-                                        Log.d("alexx", "new: " + channel.getTitle());
-                                    }
-
-                                    // channel content
-                                    int count = 0;
-                                    int totalCount = channel.getPrograms().size();
-                                    for (Program program : channel.getPrograms()) {
-
-                                        if (count == 0 && next && sliceLayout.getChildCount() > 0 &&
-                                            program.getStartDate().getTime() < channelGroup.getStartDate().getTime()) {
-                                            // if need to merge privious item
-                                            textView = (TextView) sliceLayout.getChildAt(sliceLayout.getChildCount()-1);
-                                            params = textView.getLayoutParams();
-                                            params.width = Utils.getRelatedProgramSliceWidth(program,
-                                                    mTimeController.getViewStartDate(),
-                                                    mTimeController.getViewEndDate());
-                                            textView.requestLayout();
-                                            Log.d("alexx", "    next exist");
-                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
-                                        } else if (count == (totalCount -1) && !next && sliceLayout.getChildCount() > count &&
-                                                program.getEndDate().getTime() >
-                                                        (channelGroup.getStartDate().getTime() + YahooTvConstant.YAHOO_SEARCH_TIME * Utils.MILLISECOND_IN_HOUR)) {
-                                            // if need to merge post item
-                                            textView = (TextView) sliceLayout.getChildAt(count);
-                                            params = textView.getLayoutParams();
-                                            params.width = Utils.getRelatedProgramSliceWidth(program,
-                                                    mTimeController.getViewStartDate(),
-                                                    mTimeController.getViewEndDate());
-                                            textView.requestLayout();
-
-                                            Log.d("alexx", "    previous exist");
-                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
-                                        } else {
-                                            if (count == 0 && next && sliceLayout.getChildCount() > 0 &&
-                                                    program.getStartDate().getTime() > channelGroup.getStartDate().getTime()) {
-
-                                                // there is bug, adjust view must use correct program object
-                                                textView = (TextView) sliceLayout.getChildAt(sliceLayout.getChildCount()-1);
-                                                Program textViewProgram = (Program) textView.getTag();
-                                                params = textView.getLayoutParams();
-                                                params.width = Utils.getRelatedProgramSliceWidth(textViewProgram,
-                                                        mTimeController.getViewStartDate(),
-                                                        mTimeController.getViewEndDate());
-                                                textView.requestLayout();
-                                                //https://tw.movies.yahoo.com/service/rest/?method=ymv.tv.getList&gid=5&date=2016-06-24&h=18
-                                                //existed: 教育文化頻道
-                                                //120 / 華視新住民新聞-越南語(普) / 10 / Fri Jun 24 19:00:00 GMT+08:00 2016 / Fri Jun 24 19:10:00 GMT+08:00 2016
-                                                //300 / 動感科技-機器人(普) / 25 / Fri Jun 24 19:10:00 GMT+08:00 2016 / Fri Jun 24 19:35:00 GMT+08:00 2016
-                                                //300 / 動感科技-機器人(普) / 25 / Fri Jun 24 19:35:00 GMT+08:00 2016 / Fri Jun 24 20:00:00 GMT+08:00 2016
-                                            }
-
-                                            params = new ViewGroup.LayoutParams(
-                                                    Utils.getRelatedProgramSliceWidth(program,
-                                                            mTimeController.getViewStartDate(),
-                                                            mTimeController.getViewEndDate()),
-                                                    ViewGroup.LayoutParams.WRAP_CONTENT);
-                                            textView = new TextView(MainActivity.this);
-                                            textView.setText(program.getTitle() + "/" + program.getTime());
-                                            textView.setBackground(getResources().getDrawable(R.drawable.program_textview, null));
-                                            textView.setLayoutParams(params);
-                                            textView.setHorizontallyScrolling(true);
-                                            textView.setSingleLine(true);
-                                            textView.setTag(program);
-
-                                            if (next) {
-                                                sliceLayout.addView(textView);
-                                            } else {
-                                                sliceLayout.addView(textView, count);
-                                            }
-
-                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
-                                        }
-                                        count++;
-                                    }
-                                    mViewController.add(channel.getTitle(), sliceLayout);
-                                }
-                                mIsProcessing = false;
-                                mPreviousButton.setEnabled(true);
-                                mNextButton.setEnabled(true);
-                            }
-                        });
-                    }
+//                    if (channelGroup != null) {
+//                        runOnUiThread(new Runnable() {
+//                            public void run() {
+//
+//                                ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
+//                                        Utils.getSliceBacisWidth(MainActivity.this), ViewGroup.LayoutParams.WRAP_CONTENT);
+//                                int currentHour = mTimeController.getCurrentHourOfDay();
+//
+//                                mTimeController.resetSearchTime(channelGroup.getSearchingStartDate(), channelGroup.getSearchingEndDate());
+//                                Log.d("alexx", "viewStartTime " + mTimeController.getViewStartDate());
+//                                Log.d("alexx", "viewEndTime   " + mTimeController.getViewEndDate());
+//
+//                                TextView textView = new TextView(MainActivity.this);
+//                                textView.setText(Utils.toHourOfDayString(currentHour));
+//                                textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, currentHour));
+//                                textView.setLayoutParams(params);
+//                                if (next) {
+//                                    mTimeSliceLayout.addView(textView);
+//                                } else {
+//                                    mTimeSliceLayout.addView(textView, 0);
+//                                }
+//
+//                                textView = new TextView(MainActivity.this);
+//                                textView.setText(Utils.toHourOfDayString(currentHour + 1));
+//                                textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, currentHour + 1));
+//                                textView.setLayoutParams(params);
+//                                if (next) {
+//                                    mTimeSliceLayout.addView(textView);
+//                                } else {
+//                                    mTimeSliceLayout.addView(textView, 1);
+//                                }
+//
+//                                int channelCount = 0;
+//                                for (Channel channel : channelGroup.getChannels().values()) {
+//                                    int bg = (channelCount++ % 2 == 0) ? R.color.programBg1 : R.color.programBg2;
+//                                    bg = getResources().getColor(bg, null);
+//
+//                                    LinearLayout sliceLayout = null;
+//                                    // channel title
+//                                    if (mViewController.containsChannel(channel.getTitle())) {
+//                                        sliceLayout = mViewController.getLayout(channel.getTitle());
+//                                        Log.d("alexx", "existed: " + channel.getTitle());
+//                                    } else {
+//                                        textView = new TextView(MainActivity.this);
+//                                        textView.setText(channel.getTitle());
+//                                        textView.setBackgroundColor(bg);
+//                                        mChannelTitleLayout.addView(textView);
+//
+//                                        sliceLayout = new LinearLayout(MainActivity.this);
+//                                        sliceLayout.setOrientation(LinearLayout.HORIZONTAL);
+//                                        mProgramDurationLayout.addView(sliceLayout);
+//
+//                                        Log.d("alexx", "new: " + channel.getTitle());
+//                                    }
+//
+//                                    // channel content
+//                                    int count = 0;
+//                                    int totalCount = channel.getPrograms().size();
+//                                    for (Program program : channel.getPrograms()) {
+//
+//                                        if (count == 0 && next && sliceLayout.getChildCount() > 0 &&
+//                                            program.getStartDate().getTime() < channelGroup.getSearchingStartDate().getTime()) {
+//                                            // if need to merge privious item
+//                                            textView = (TextView) sliceLayout.getChildAt(sliceLayout.getChildCount()-1);
+//                                            params = textView.getLayoutParams();
+//                                            params.width = Utils.getRelatedProgramSliceWidth(program,
+//                                                    mTimeController.getViewStartDate(),
+//                                                    mTimeController.getViewEndDate());
+//                                            textView.requestLayout();
+//                                            Log.d("alexx", "    next exist");
+//                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
+//                                        } else if (count == (totalCount -1) && !next && sliceLayout.getChildCount() > count &&
+//                                                program.getEndDate().getTime() >
+//                                                        (channelGroup.getSearchingStartDate().getTime() + YahooTvConstant.YAHOO_SEARCH_TIME * Utils.MILLISECOND_IN_HOUR)) {
+//                                            // if need to merge post item
+//                                            textView = (TextView) sliceLayout.getChildAt(count);
+//                                            params = textView.getLayoutParams();
+//                                            params.width = Utils.getRelatedProgramSliceWidth(program,
+//                                                    mTimeController.getViewStartDate(),
+//                                                    mTimeController.getViewEndDate());
+//                                            textView.requestLayout();
+//
+//                                            Log.d("alexx", "    previous exist");
+//                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
+//                                        } else {
+//                                            if (count == 0 && next && sliceLayout.getChildCount() > 0 &&
+//                                                    program.getStartDate().getTime() > channelGroup.getSearchingStartDate().getTime()) {
+//
+//                                                // there is bug, adjust view must use correct program object
+//                                                textView = (TextView) sliceLayout.getChildAt(sliceLayout.getChildCount()-1);
+//                                                Program textViewProgram = (Program) textView.getTag();
+//                                                params = textView.getLayoutParams();
+//                                                params.width = Utils.getRelatedProgramSliceWidth(textViewProgram,
+//                                                        mTimeController.getViewStartDate(),
+//                                                        mTimeController.getViewEndDate());
+//                                                textView.requestLayout();
+//                                                //https://tw.movies.yahoo.com/service/rest/?method=ymv.tv.getList&gid=5&date=2016-06-24&h=18
+//                                                //existed: 教育文化頻道
+//                                                //120 / 華視新住民新聞-越南語(普) / 10 / Fri Jun 24 19:00:00 GMT+08:00 2016 / Fri Jun 24 19:10:00 GMT+08:00 2016
+//                                                //300 / 動感科技-機器人(普) / 25 / Fri Jun 24 19:10:00 GMT+08:00 2016 / Fri Jun 24 19:35:00 GMT+08:00 2016
+//                                                //300 / 動感科技-機器人(普) / 25 / Fri Jun 24 19:35:00 GMT+08:00 2016 / Fri Jun 24 20:00:00 GMT+08:00 2016
+//                                            }
+//
+//                                            params = new ViewGroup.LayoutParams(
+//                                                    Utils.getRelatedProgramSliceWidth(program,
+//                                                            mTimeController.getViewStartDate(),
+//                                                            mTimeController.getViewEndDate()),
+//                                                    ViewGroup.LayoutParams.WRAP_CONTENT);
+//                                            textView = new TextView(MainActivity.this);
+//                                            textView.setText(program.getTitle() + "/" + program.getTime());
+//                                            textView.setBackground(getResources().getDrawable(R.drawable.program_textview, null));
+//                                            textView.setLayoutParams(params);
+//                                            textView.setHorizontallyScrolling(true);
+//                                            textView.setSingleLine(true);
+//                                            textView.setTag(program);
+//
+//                                            if (next) {
+//                                                sliceLayout.addView(textView);
+//                                            } else {
+//                                                sliceLayout.addView(textView, count);
+//                                            }
+//
+//                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
+//                                        }
+//                                        count++;
+//                                    }
+//                                    mViewController.add(channel.getTitle(), sliceLayout);
+//                                }
+//                                mIsProcessing = false;
+//                                mPreviousButton.setEnabled(true);
+//                                mNextButton.setEnabled(true);
+//                            }
+//                        });
+//                    }
                 }
             }.start();
-        } else {
-            Log.d("alexx", "already search / " + mTimeController.getCalendar().getTime());
-            mIsProcessing = false;
-            mPreviousButton.setEnabled(true);
-            mNextButton.setEnabled(true);
-        }
-
-
+//        } else {
+//            Log.d("alexx", "already search / " + mTimeController.getCalendar().getTime());
+//            mIsProcessing = false;
+//            mPreviousButton.setEnabled(true);
+//            mNextButton.setEnabled(true);
+//        }
     }
 
     public void searchMore(boolean next) {
@@ -249,6 +253,82 @@ public class MainActivity extends AppCompatActivity {
             }
             search(next);
         }
+    }
+
+    public void refreshUI() {
+        Log.d("alexx", "refreshUI");
+
+        runOnUiThread(new Runnable() {
+            public void run() {
+
+                //clear UI
+                mChannelTitleLayout.removeAllViews();
+                TextView textView = new TextView(MainActivity.this);
+                mChannelTitleLayout.addView(textView);
+                mProgramDurationLayout.removeAllViews();
+                mTimeSliceLayout.removeAllViews();
+
+                ChannelGroup channelGroup = mModelController.getModel();
+
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(channelGroup.getSearchingStartDate());
+                int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
+                long duration = channelGroup.getSearchingEndDate().getTime() -
+                                    channelGroup.getSearchingStartDate().getTime();
+                long hours = TimeUnit.MILLISECONDS.toHours(duration);
+
+                ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
+                        Utils.getSliceBacisWidth(MainActivity.this), ViewGroup.LayoutParams.WRAP_CONTENT);
+                for (int i = 0; i < hours; i++) {
+                    textView = new TextView(MainActivity.this);
+                    textView.setText(Utils.toHourOfDayString((currentHour + i) % 24));
+                    textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, (currentHour + i) % 24));
+                    textView.setLayoutParams(params);
+                    mTimeSliceLayout.addView(textView);
+                }
+
+
+                int channelCount = 0;
+                for (Channel channel : channelGroup.getChannels().values()) {
+                    int bg = (channelCount++ % 2 == 0) ? R.color.programBg1 : R.color.programBg2;
+                    bg = getResources().getColor(bg, null);
+
+                    // channel title
+                    textView = new TextView(MainActivity.this);
+                    textView.setText(channel.getTitle());
+                    textView.setBackgroundColor(bg);
+                    mChannelTitleLayout.addView(textView);
+                    Log.d("alexx", channel.getTitle());
+
+                    // channel content
+                    LinearLayout channelSliceLayout = new LinearLayout(MainActivity.this);
+                    channelSliceLayout.setOrientation(LinearLayout.HORIZONTAL);
+                    mProgramDurationLayout.addView(channelSliceLayout);
+                    int count = 0;
+                    int totalCount = channel.getPrograms().size();
+                    for (Program program : channel.getPrograms()) {
+                        params = new ViewGroup.LayoutParams(
+                                Utils.getRelatedProgramSliceWidth(program,
+                                        mModelController.getModel().getSearchingStartDate(),
+                                        mModelController.getModel().getSearchingEndDate()),
+                                ViewGroup.LayoutParams.WRAP_CONTENT);
+                        textView = new TextView(MainActivity.this);
+                        textView.setText(program.getTitle() + "/" + program.getTime());
+                        textView.setBackground(getResources().getDrawable(R.drawable.program_textview, null));
+                        textView.setLayoutParams(params);
+                        textView.setHorizontallyScrolling(true);
+                        textView.setSingleLine(true);
+                        channelSliceLayout.addView(textView);
+
+                        Log.d("alexx", "____" + params.width + " / " + program.toString());
+                    }
+                    mViewController.add(channel.getTitle(), channelSliceLayout);
+                }
+                mIsProcessing = false;
+                mPreviousButton.setEnabled(true);
+                mNextButton.setEnabled(true);
+            }
+        });
     }
 
     @Override

@@ -53,8 +53,6 @@ public class YahooTvTimeParser {
                                                   calendar);
                     channel.addProgram(program);
                 }
-
-                channel.processYahooTimeError(channelGroup.getStartDate());
             }
 
             return channelGroup;

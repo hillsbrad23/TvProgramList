@@ -12,7 +12,7 @@ public class Channel {
 
     public Channel(String title) {
         mTitle = title;
-        mPrograms = new ArrayList<Program>();
+        mPrograms = new ArrayList<>();
     }
 
     public String getTitle() {
@@ -27,7 +27,38 @@ public class Channel {
         return mPrograms;
     }
 
-    public void processYahooTimeError(Date startDate) {
+    public void attach(Channel channel) {
+        if (mPrograms.size() == 0) {
+            mPrograms.addAll(channel.getPrograms());
+        } else if (channel.getPrograms().size() != 0) {
+            long baseTime;
+            Boolean backward = false;
+            if (mPrograms.get(0).getStartDate().getTime() > channel.getPrograms().get(0).getStartDate().getTime()) {
+                baseTime = mPrograms.get(0).getStartDate().getTime();
+                backward = true;
+            } else {
+                baseTime = mPrograms.get(mPrograms.size()-1).getEndDate().getTime();
+            }
 
+            for (Program program: channel.getPrograms()) {
+                int count = 0;
+
+                if (mPrograms.contains(program)) {
+                    continue;
+                }
+
+                if (backward) {
+                    if (program.getEndDate().getTime() > baseTime) {
+                        program.setHasTimeProblem(true);
+                    }
+                    mPrograms.add(count++, program);
+                } else {
+                    if (program.getStartDate().getTime() < baseTime) {
+                        program.setHasTimeProblem(true);
+                    }
+                    mPrograms.add(program);
+                }
+            }
+        }
     }
 }

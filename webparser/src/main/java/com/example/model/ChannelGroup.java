@@ -5,37 +5,66 @@ import com.example.YahooTvConstant;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * Created by alex on 6/16/16.
  */
 public class ChannelGroup {
-    private ArrayList<Channel> channels = new ArrayList<Channel>();
-    private Date mStartDate;
-    private Date mEndDate;
+//    private ArrayList<Channel> mChannels = new ArrayList<Channel>();
+    private HashMap<String, Channel> mChannels;
+
+    private Date mSearchingStartDate;
+    private Date mSearchingEndDate;
+
+    public ChannelGroup() {
+        mChannels = new HashMap<>();
+    }
 
     public void addChannel(Channel channel) {
-        channels.add(channel);
+        if (!mChannels.containsKey(channel.getTitle())) {
+            mChannels.put(channel.getTitle(), channel);
+        }
     }
 
-    public ArrayList<Channel> getChannels() {
-        return channels;
+    public HashMap<String, Channel> getChannels() {
+        return mChannels;
     }
 
-    public Date getStartDate() {
-        return mStartDate;
+    public Date getSearchingStartDate() {
+        return mSearchingStartDate;
     }
 
-    public Date getEndDate() {
-        return mEndDate;
+    public Date getSearchingEndDate() {
+        return mSearchingEndDate;
     }
 
     public void setProcessDate(Date startDate) {
-        mStartDate = startDate;
+        mSearchingStartDate = startDate;
 
         Calendar endCal = Calendar.getInstance();
         endCal.setTime(startDate);
         endCal.add(Calendar.HOUR, YahooTvConstant.YAHOO_SEARCH_TIME);
-        mEndDate = endCal.getTime();
+        mSearchingEndDate = endCal.getTime();
+    }
+
+    public void attach(ChannelGroup channelGroup) {
+        if (mSearchingStartDate == null ||
+                channelGroup.getSearchingStartDate().getTime() < mSearchingStartDate.getTime()) {
+            mSearchingStartDate = channelGroup.getSearchingStartDate();
+        }
+
+        if (mSearchingEndDate == null ||
+                mSearchingEndDate.getTime() < channelGroup.getSearchingEndDate().getTime()) {
+            mSearchingEndDate = channelGroup.getSearchingEndDate();
+        }
+
+        for (Channel channel: channelGroup.getChannels().values()) {
+            if (mChannels.containsKey(channel.getTitle())) {
+                mChannels.get(channel.getTitle()).attach(channel);
+            } else {
+                mChannels.put(channel.getTitle(), channel);
+            }
+        }
     }
 }

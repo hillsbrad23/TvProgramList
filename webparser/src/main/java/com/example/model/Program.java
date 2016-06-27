@@ -21,6 +21,8 @@ public class Program {
     private Date mStartDate;
     private Date mEndDate;
 
+    private boolean mHasTimeProblem;
+
     public Program(String title, String time, Calendar calendar) {
         this.mTitle = title;
         this.mTime = time;
@@ -79,6 +81,10 @@ public class Program {
         return mEndDate;
     }
 
+    public void setHasTimeProblem(boolean problem) {
+        mHasTimeProblem = problem;
+    }
+
     public int getRuntime() {
         long duration  = mEndDate.getTime() - mStartDate.getTime();
         return (int) TimeUnit.MILLISECONDS.toMinutes(duration);
@@ -89,5 +95,18 @@ public class Program {
         StringBuilder builder = new StringBuilder();
         builder.append(mTitle + " / " + getRuntime() + " / " + mStartDate + " / " + mEndDate);
         return builder.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Program) {
+            Program program = (Program) o;
+            if (mTitle.equals(program.getTitle()) &&
+                    mStartDate.equals(program.getStartDate()) &&
+                    mEndDate.equals(program.getEndDate())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
