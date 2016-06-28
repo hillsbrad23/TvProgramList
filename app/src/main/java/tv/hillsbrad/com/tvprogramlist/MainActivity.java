@@ -7,8 +7,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.example.YahooTvConstant;
@@ -26,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout mProgramDurationLayout;
     private LinearLayout mTimeSliceLayout;
 
+    private Spinner mTypeSpinner;
+
     private ImageButton mPreviousButton;
     private ImageButton mNextButton;
     private boolean mIsProcessing;
@@ -33,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
     private TimeController mTimeController;
     private ViewController mViewController;
     private ModelController mModelController;
+
+    ArrayAdapter<String> mSpinnerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
 
+
         final Calendar calendar = Calendar.getInstance();
 
         mTimeController = new TimeController();
@@ -64,6 +72,9 @@ public class MainActivity extends AppCompatActivity {
         mChannelTitleLayout.addView(textView);
         mProgramDurationLayout = (LinearLayout) findViewById(R.id.program_duration_layout);
         mTimeSliceLayout = (LinearLayout) findViewById(R.id.time_slice_layout);
+
+        mTypeSpinner = (Spinner) findViewById(R.id.type_spinner);
+        initSpinner();
 
         mPreviousButton = (ImageButton) findViewById(R.id.previous_button);
         mPreviousButton.setOnClickListener(new View.OnClickListener() {
@@ -85,14 +96,34 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void initSpinner() {
+        String[] channels = new String[YahooTvConstant.CHANNEL_TYPE.length];
+        for (int i = 0; i < YahooTvConstant.CHANNEL_TYPE.length; i++) {
+            channels[i] = getString(YahooTvConstant.CHANNEL_TYPE[i]);
+        }
+        mSpinnerAdapter= new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, channels);
+        mTypeSpinner.setAdapter(mSpinnerAdapter);
+        mTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mModelController.setCurrentGroup(YahooTvConstant.Group.convertToGroup(position+1));
+                search(true);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+    }
+
     public void search(final boolean next) {
 //        if (!mTimeController.isSearched()) {
             new Thread() {
                 public void run() {
                     final ChannelGroup channelGroup = YahooTvTimeParser.parse(MainActivity.this,
-                            YahooTvConstant.Group.FIVE, mTimeController.getCalendar());
+                            mModelController.getCurrentGroup(), mTimeController.getCalendar());
                     mModelController.attach(channelGroup);
-
 
                     refreshUI();
 
@@ -304,8 +335,6 @@ public class MainActivity extends AppCompatActivity {
                     LinearLayout channelSliceLayout = new LinearLayout(MainActivity.this);
                     channelSliceLayout.setOrientation(LinearLayout.HORIZONTAL);
                     mProgramDurationLayout.addView(channelSliceLayout);
-                    int count = 0;
-                    int totalCount = channel.getPrograms().size();
                     for (Program program : channel.getPrograms()) {
                         params = new ViewGroup.LayoutParams(
                                 Utils.getRelatedProgramSliceWidth(program,

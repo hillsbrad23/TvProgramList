@@ -25,6 +25,14 @@
             android:src="@drawable/round_menu_previous_button_normal"
             android:background="#00000000"
             android:layout_alignParentLeft="true"/>
+        <Spinner
+            android:id="@+id/type_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:gravity="center">
+
+        </Spinner>
         <ImageButton
             android:id="@+id/next_button"
             android:layout_width="wrap_content"

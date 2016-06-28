@@ -13,19 +13,25 @@ import java.util.Map;
  */
 public class YahooTvConstant {
 
+    public final static int[] CHANNEL_TYPE = {
+            R.string.channel_type_one, R.string.channel_type_two, R.string.channel_type_three,
+            R.string.channel_type_four, R.string.channel_type_five, R.string.channel_type_six,
+            R.string.channel_type_seven, R.string.channel_type_eight, R.string.channel_type_nine,
+            R.string.channel_type_ten, R.string.channel_type_eleven, R.string.channel_type_twelve};
+
     public enum Group {
-        ONE(1),      //���
-        TWO(2),     //���
-        THREE(3),   //���@
-        FOUR(4),    //��|
-        FIVE(5),     //��X
-        SIX(6),      //����
-        SEVEN(7),   //�饻
-        EIGHT(8),   //����
-        NINE(9),   //�d�q
-        TEN(10),     //�s�D
-        ELEVEN(11),  //�]�g
-        TWELVE(12); //�v��
+        ONE(1),
+        TWO(2),
+        THREE(3),
+        FOUR(4),
+        FIVE(5),
+        SIX(6),
+        SEVEN(7),
+        EIGHT(8),
+        NINE(9),
+        TEN(10),
+        ELEVEN(11),
+        TWELVE(12);
 
         private int value;
 
@@ -33,8 +39,56 @@ public class YahooTvConstant {
             this.value = value;
         }
 
+        public int getStringRes() {
+            return CHANNEL_TYPE[value-1];
+        }
+
         public int getValue() {
             return value;
+        }
+
+        public static Group convertToGroup(int i) {
+            Group groupDefault = ONE;
+            switch (i) {
+                case 1:
+                    groupDefault = ONE;
+                    break;
+                case 2:
+                    groupDefault = TWO;
+                    break;
+                case 3:
+                    groupDefault = THREE;
+                    break;
+                case 4:
+                    groupDefault = FOUR;
+                    break;
+                case 5:
+                    groupDefault = FIVE;
+                    break;
+                case 6:
+                    groupDefault = SIX;
+                    break;
+                case 7:
+                    groupDefault = SEVEN;
+                    break;
+                case 8:
+                    groupDefault = EIGHT;
+                    break;
+                case 9:
+                    groupDefault = NINE;
+                    break;
+                case 10:
+                    groupDefault = TEN;
+                    break;
+                case 11:
+                    groupDefault = ELEVEN;
+                    break;
+                case 12:
+                    groupDefault = TWELVE;
+                    break;
+            }
+
+            return groupDefault;
         }
     };
 

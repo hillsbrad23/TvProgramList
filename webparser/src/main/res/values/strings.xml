@@ -2,6 +2,19 @@
     <string name="app_name">TvProgramList</string>
     <string name="action_settings">Settings</string>
 
+    <string name="channel_type_one">西片</string>
+    <string name="channel_type_two">國片</string>
+    <string name="channel_type_three">戲劇</string>
+    <string name="channel_type_four">體育</string>
+    <string name="channel_type_five">綜合</string>
+    <string name="channel_type_six">知性</string>
+    <string name="channel_type_seven">日本</string>
+    <string name="channel_type_eight">音樂</string>
+    <string name="channel_type_nine">卡通</string>
+    <string name="channel_type_ten">新聞</string>
+    <string name="channel_type_eleven">財經</string>
+    <string name="channel_type_twelve">宗教</string>
+
     <string name="one_one">AXN</string>
     <string name="one_two">Cinemax</string>
     <string name="one_three">HBO</string>
