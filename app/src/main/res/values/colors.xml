@@ -4,14 +4,10 @@
     <color name="colorPrimaryDark">#ff9f8f9d</color>
     <color name="colorAccent">#ff91ffc1</color>
 
-    <color name="programBg1">#ff9f95b5</color>
-    <color name="programBg2">@android:color/white</color>
+    <color name="colorChannelTitleBg">#ff9f95b5</color>
 
     <color name="colorTimeSlice1">#ff9073b5</color>
     <color name="colorTimeSlice2">#ff7991b5</color>
-
-    <color name="colorProgramSlice1">#ff7783b5</color>
-    <color name="colorProgramSlice2">@android:color/white</color>
 
     <color name="colorButtonClick">#fffff5ad</color>
 </resources>

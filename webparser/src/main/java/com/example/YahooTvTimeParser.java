@@ -25,11 +25,11 @@ import java.util.Date;
  */
 public class YahooTvTimeParser {
 
-    public static ChannelGroup parse(Context context, YahooTvConstant.Group group, Calendar calendar) {
+    public static ChannelGroup parse(Context context, YahooTvConstant.Group group, Calendar queryTime) {
         try {
-
+            queryTime.setTime(convert2StartDate(queryTime));
             // https://tw.movies.yahoo.com/service/rest/?method=ymv.tv.getList&date=2016-06-08&h=16&gid=1
-            String url = YahooTvConstant.URL.concat("&gid=" + group.getValue() + "&date=" + getDate(calendar) + "&h=" + calendar.get(Calendar.HOUR_OF_DAY));
+            String url = YahooTvConstant.URL.concat("&gid=" + group.getValue() + "&date=" + getDate(queryTime) + "&h=" + queryTime.get(Calendar.HOUR_OF_DAY));
             Log.d("alexx", "parse url=" + url);
             Connection.Response response = Jsoup.connect(url).timeout(30000)
                                                             .method(Connection.Method.GET)
@@ -38,7 +38,7 @@ public class YahooTvTimeParser {
             Elements elements = doc.getElementsByClass("channel");
 
             ChannelGroup channelGroup = new ChannelGroup();
-            channelGroup.setProcessDate(convert2StartDate(calendar));
+            channelGroup.setProcessDate(queryTime.getTime());
             int channelCount = 0;
             for (Element element: elements) {
 
@@ -50,7 +50,7 @@ public class YahooTvTimeParser {
                 for (Element li: lis) {
                     Program program = new Program(li.getElementsByClass("title").get(0).text(),
                                                   li.getElementsByClass("time").get(0).text(),
-                                                  calendar);
+                                                  queryTime);
                     channel.addProgram(program);
                 }
             }

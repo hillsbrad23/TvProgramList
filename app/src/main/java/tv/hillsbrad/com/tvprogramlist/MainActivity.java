@@ -35,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton mNextButton;
     private boolean mIsProcessing;
 
-    private TimeController mTimeController;
     private ViewController mViewController;
     private ModelController mModelController;
 
@@ -60,10 +59,6 @@ public class MainActivity extends AppCompatActivity {
 //        });
 
 
-        final Calendar calendar = Calendar.getInstance();
-
-        mTimeController = new TimeController();
-        mTimeController.setTime(YahooTvTimeParser.convert2StartDate(calendar));
         mViewController = new ViewController();
         mModelController = new ModelController();
 
@@ -91,9 +86,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mIsProcessing = true;
-        search(true);
-
+        searchMore(true);
     }
 
     public void initSpinner() {
@@ -106,8 +99,18 @@ public class MainActivity extends AppCompatActivity {
         mTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                mModelController.setCurrentGroup(YahooTvConstant.Group.convertToGroup(position+1));
-                search(true);
+                if (!mIsProcessing) {
+                    Log.d("alexx", "item selected: " + parent.getItemAtPosition(position));
+                    mModelController.setCurrentGroup(YahooTvConstant.Group.convertToGroup(position + 1));
+
+                    if (mModelController.getModel().getSearchingStartDate() == null &&
+                            mModelController.getModel().getSearchingEndDate() == null) {
+                        searchMore(true);
+                    } else {
+                        Log.d("alexx", "data already existed");
+                        refreshUI();
+                    }
+                }
             }
 
             @Override
@@ -122,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
             new Thread() {
                 public void run() {
                     final ChannelGroup channelGroup = YahooTvTimeParser.parse(MainActivity.this,
-                            mModelController.getCurrentGroup(), mTimeController.getCalendar());
+                            mModelController.getCurrentGroup(), mModelController.getQueryDate(next));
                     mModelController.attach(channelGroup);
 
                     refreshUI();
@@ -276,12 +279,8 @@ public class MainActivity extends AppCompatActivity {
             mIsProcessing = true;
             mPreviousButton.setEnabled(false);
             mNextButton.setEnabled(false);
+            mTypeSpinner.setEnabled(false);
 
-            if (next) {
-                mTimeController.addTime(YahooTvConstant.YAHOO_SEARCH_TIME);
-            } else {
-                mTimeController.addTime(YahooTvConstant.YAHOO_SEARCH_TIME * -1);
-            }
             search(next);
         }
     }
@@ -321,13 +320,12 @@ public class MainActivity extends AppCompatActivity {
 
                 int channelCount = 0;
                 for (Channel channel : channelGroup.getChannels().values()) {
-                    int bg = (channelCount++ % 2 == 0) ? R.color.programBg1 : R.color.programBg2;
-                    bg = getResources().getColor(bg, null);
-
                     // channel title
                     textView = new TextView(MainActivity.this);
                     textView.setText(channel.getTitle());
-                    textView.setBackgroundColor(bg);
+                    if (channelCount++ % 2 == 0) {
+                        textView.setBackgroundColor(getResources().getColor(R.color.colorChannelTitleBg, null));
+                    }
                     mChannelTitleLayout.addView(textView);
                     Log.d("alexx", channel.getTitle());
 
@@ -356,6 +354,7 @@ public class MainActivity extends AppCompatActivity {
                 mIsProcessing = false;
                 mPreviousButton.setEnabled(true);
                 mNextButton.setEnabled(true);
+                mTypeSpinner.setEnabled(true);
             }
         });
     }

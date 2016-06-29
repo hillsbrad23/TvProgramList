@@ -35,14 +35,6 @@ public class Utils {
         }
     }
 
-    public static int getProgramSliceColor(Context context, int count) {
-        if (count % 2 == 0) {
-            return context.getResources().getColor(R.color.colorProgramSlice1, null);
-        } else {
-            return context.getResources().getColor(R.color.colorProgramSlice2, null);
-        }
-    }
-
     private static int sSliceBasicWidth = -1;
     public static int getSliceBacisWidth(Context context) {
         if (sSliceBasicWidth == -1)
