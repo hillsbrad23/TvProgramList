@@ -1,11 +1,7 @@
-package com.example;
+package tv.hillsbrad.com.yahoo;
 
 import android.content.Context;
 import android.util.Log;
-
-import com.example.model.Channel;
-import com.example.model.ChannelGroup;
-import com.example.model.Program;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -19,13 +15,18 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import tv.hillsbrad.com.App;
+import tv.hillsbrad.com.model.Channel;
+import tv.hillsbrad.com.model.ChannelGroup;
+import tv.hillsbrad.com.model.Program;
+
 
 /**
  * Created by alex on 2016/4/14.
  */
 public class YahooTvTimeParser {
 
-    public static ChannelGroup parse(Context context, YahooTvConstant.Group group, Calendar queryTime) {
+    public static ChannelGroup parse(YahooTvConstant.Group group, Calendar queryTime) {
         try {
             queryTime.setTime(convert2StartDate(queryTime));
             // https://tw.movies.yahoo.com/service/rest/?method=ymv.tv.getList&date=2016-06-08&h=16&gid=1
@@ -42,7 +43,12 @@ public class YahooTvTimeParser {
             int channelCount = 0;
             for (Element element: elements) {
 
-                String channelTitle = context.getString(YahooTvConstant.getChannelNameRes(group.getValue(), channelCount++));
+                int resId = YahooTvConstant.getChannelNameRes(group.getValue(), channelCount++);
+                if (resId == 0) {
+                    continue;
+                }
+
+                String channelTitle = App.getContext().getString(resId);
                 Channel channel = new Channel(channelTitle);
                 channelGroup.addChannel(channel);
 

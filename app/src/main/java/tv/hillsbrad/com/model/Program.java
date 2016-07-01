@@ -1,8 +1,4 @@
-package com.example.model;
-
-import android.util.Log;
-
-import com.example.YahooTvConstant;
+package tv.hillsbrad.com.model;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -10,6 +6,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+
+import tv.hillsbrad.com.yahoo.YahooTvConstant;
 
 /**
  * Created by alex on 2016/4/14.

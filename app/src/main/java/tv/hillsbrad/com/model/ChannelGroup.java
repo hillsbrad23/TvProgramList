@@ -1,24 +1,22 @@
-package com.example.model;
+package tv.hillsbrad.com.model;
 
-import com.example.YahooTvConstant;
-
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+
+import tv.hillsbrad.com.yahoo.YahooTvConstant;
 
 /**
  * Created by alex on 6/16/16.
  */
 public class ChannelGroup {
-//    private ArrayList<Channel> mChannels = new ArrayList<Channel>();
-    private HashMap<String, Channel> mChannels;
+    private LinkedHashMap<String, Channel> mChannels;
 
     private Date mSearchingStartDate;
     private Date mSearchingEndDate;
 
     public ChannelGroup() {
-        mChannels = new HashMap<>();
+        mChannels = new LinkedHashMap<>();
     }
 
     public void addChannel(Channel channel) {
@@ -27,7 +25,7 @@ public class ChannelGroup {
         }
     }
 
-    public HashMap<String, Channel> getChannels() {
+    public LinkedHashMap<String, Channel> getChannels() {
         return mChannels;
     }
 

@@ -14,6 +14,7 @@
     <string name="channel_type_ten">新聞</string>
     <string name="channel_type_eleven">財經</string>
     <string name="channel_type_twelve">宗教</string>
+    <string name="channel_type_thirteen">自訂</string>
 
     <string name="one_one">AXN</string>
     <string name="one_two">Cinemax</string>
@@ -101,20 +102,5 @@
     <string name="twelve_one">人間衛視台</string>
     <string name="twelve_two">大愛電視台</string>
     <string name="twelve_three">GOOD TV 好消息</string>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 </resources>

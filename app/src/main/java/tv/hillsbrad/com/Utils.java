@@ -1,9 +1,10 @@
-package tv.hillsbrad.com.tvprogramlist;
+package tv.hillsbrad.com;
 
 import android.content.Context;
 import android.util.Log;
 
-import com.example.model.Program;
+import tv.hillsbrad.com.model.Program;
+import tv.hillsbrad.com.tvprogramlist.R;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

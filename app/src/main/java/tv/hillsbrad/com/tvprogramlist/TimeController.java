@@ -1,9 +1,5 @@
 package tv.hillsbrad.com.tvprogramlist;
 
-import android.util.Log;
-
-import com.example.YahooTvConstant;
-
 import java.util.Calendar;
 import java.util.Date;
 

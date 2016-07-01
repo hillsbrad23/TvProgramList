@@ -1,7 +1,6 @@
-package com.example.model;
+package tv.hillsbrad.com.model;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 /**
  * Created by alex on 6/8/16.

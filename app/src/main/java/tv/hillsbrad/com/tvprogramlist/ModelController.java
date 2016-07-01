@@ -1,7 +1,8 @@
 package tv.hillsbrad.com.tvprogramlist;
 
-import com.example.YahooTvConstant;
-import com.example.model.ChannelGroup;
+import tv.hillsbrad.com.yahoo.YahooTvConstant;
+import tv.hillsbrad.com.model.ChannelGroup;
+import tv.hillsbrad.com.yahoo.YahooTvTimeParser;
 
 import java.util.Calendar;
 
@@ -18,7 +19,7 @@ public class ModelController {
         mChannelsGroup = new ChannelGroup[YahooTvConstant.Group.values().length];
     }
 
-    public void attach(ChannelGroup group) {
+    private void attach(ChannelGroup group) {
         if (mChannelsGroup[mCurrentGroup.getValue()-1] == null) {
             mChannelsGroup[mCurrentGroup.getValue()-1] = new ChannelGroup();
         }
@@ -40,7 +41,7 @@ public class ModelController {
         mCurrentGroup = group;
     }
 
-    public Calendar getQueryDate(boolean forward) {
+    private Calendar getQueryDate(boolean forward) {
         Calendar calendar = Calendar.getInstance();
         if (mChannelsGroup[mCurrentGroup.getValue()-1] != null &&
                 mChannelsGroup[mCurrentGroup.getValue()-1].getSearchingStartDate() != null &&
@@ -54,5 +55,25 @@ public class ModelController {
         }
 
         return calendar;
+    }
+
+    public void parseMoreDataFromHttp(boolean next) {
+        if (mCurrentGroup == YahooTvConstant.Group.THIRTEEN) {
+            parseMoreCustomizeDataFromHttp(next);
+            return;
+        }
+
+        ChannelGroup channelGroup = YahooTvTimeParser.parse(mCurrentGroup, getQueryDate(next));
+        attach(channelGroup);
+    }
+
+    private void parseMoreCustomizeDataFromHttp(boolean next) {
+        YahooTvConstant.Group group = mCurrentGroup;
+        Calendar calendar = getQueryDate(next);
+        ChannelGroup channelGroup = YahooTvTimeParser.parse(YahooTvConstant.Group.ONE, calendar);
+        attach(channelGroup);
+
+        channelGroup = YahooTvTimeParser.parse(YahooTvConstant.Group.TWO, calendar);
+        attach(channelGroup);
     }
 }

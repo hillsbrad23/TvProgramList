@@ -14,11 +14,12 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.example.YahooTvConstant;
-import com.example.YahooTvTimeParser;
-import com.example.model.Channel;
-import com.example.model.ChannelGroup;
-import com.example.model.Program;
+import tv.hillsbrad.com.Utils;
+import tv.hillsbrad.com.yahoo.YahooTvConstant;
+import tv.hillsbrad.com.yahoo.YahooTvTimeParser;
+import tv.hillsbrad.com.model.Channel;
+import tv.hillsbrad.com.model.ChannelGroup;
+import tv.hillsbrad.com.model.Program;
 
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton mNextButton;
     private boolean mIsProcessing;
 
-    private ViewController mViewController;
+//    private ViewController mViewController;
     private ModelController mModelController;
 
     ArrayAdapter<String> mSpinnerAdapter;
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
 //        });
 
 
-        mViewController = new ViewController();
+//        mViewController = new ViewController();
         mModelController = new ModelController();
 
         mChannelTitleLayout = (LinearLayout) findViewById(R.id.channel_title_layout);
@@ -87,6 +88,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         searchMore(true);
+
+        CustomChannelSettings channelSettings = new CustomChannelSettings();
+        channelSettings.show(getSupportFragmentManager(),
+                CustomChannelSettings.class.getSimpleName());
     }
 
     public void initSpinner() {
@@ -103,11 +108,15 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("alexx", "item selected: " + parent.getItemAtPosition(position));
                     mModelController.setCurrentGroup(YahooTvConstant.Group.convertToGroup(position + 1));
 
+
+                    Log.d("alexx", "currentGroup=" + mModelController.getCurrentGroup().getValue());
                     if (mModelController.getModel().getSearchingStartDate() == null &&
                             mModelController.getModel().getSearchingEndDate() == null) {
                         searchMore(true);
                     } else {
                         Log.d("alexx", "data already existed");
+                        Log.d("alexx", mModelController.getModel().getSearchingStartDate().toString() + "/" +
+                                mModelController.getModel().getSearchingEndDate());
                         refreshUI();
                     }
                 }
@@ -124,11 +133,10 @@ public class MainActivity extends AppCompatActivity {
 //        if (!mTimeController.isSearched()) {
             new Thread() {
                 public void run() {
-                    final ChannelGroup channelGroup = YahooTvTimeParser.parse(MainActivity.this,
-                            mModelController.getCurrentGroup(), mModelController.getQueryDate(next));
-                    mModelController.attach(channelGroup);
-
+                    mModelController.parseMoreDataFromHttp(next);
                     refreshUI();
+                }
+            }.start();
 
 //                    if (channelGroup != null) {
 //                        runOnUiThread(new Runnable() {
@@ -264,8 +272,8 @@ public class MainActivity extends AppCompatActivity {
 //                            }
 //                        });
 //                    }
-                }
-            }.start();
+//                }
+//            }.start();
 //        } else {
 //            Log.d("alexx", "already search / " + mTimeController.getCalendar().getTime());
 //            mIsProcessing = false;
@@ -304,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
                 calendar.setTime(channelGroup.getSearchingStartDate());
                 int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
                 long duration = channelGroup.getSearchingEndDate().getTime() -
-                                    channelGroup.getSearchingStartDate().getTime();
+                        channelGroup.getSearchingStartDate().getTime();
                 long hours = TimeUnit.MILLISECONDS.toHours(duration);
 
                 ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
@@ -349,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
 
                         Log.d("alexx", "____" + params.width + " / " + program.toString());
                     }
-                    mViewController.add(channel.getTitle(), channelSliceLayout);
+//                    mViewController.add(channel.getTitle(), channelSliceLayout);
                 }
                 mIsProcessing = false;
                 mPreviousButton.setEnabled(true);
