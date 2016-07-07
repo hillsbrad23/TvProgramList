@@ -1,6 +1,7 @@
 package tv.hillsbrad.com;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import tv.hillsbrad.com.model.Program;
@@ -8,16 +9,17 @@ import tv.hillsbrad.com.tvprogramlist.R;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by alex on 6/17/16.
  */
 public class Utils {
-
-    public final static int MILLISECOND_IN_HOUR = 1000 * 60 * 60;
 
     public static int dip2px(Context context, float dpValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
@@ -50,17 +52,15 @@ public class Utils {
     public static int getRelatedProgramSliceWidth(Program program, Date viewStartDate, Date viewEndDate) {
         int relatedRuntime = program.getRuntime();
 
-        Log.d("alexx", "runtime=" + relatedRuntime);
         if (program.getStartDate().getTime() < viewStartDate.getTime()) {
             long pre = viewStartDate.getTime() - program.getStartDate().getTime();
             relatedRuntime -= TimeUnit.MILLISECONDS.toMinutes(pre);
-            Log.d("alexx", " -= " + TimeUnit.MILLISECONDS.toMinutes(pre));
         }
 
         if (program.getEndDate().getTime() > viewEndDate.getTime()) {
             long post = program.getEndDate().getTime() - viewEndDate.getTime();
             relatedRuntime -= TimeUnit.MILLISECONDS.toMinutes(post);
-            Log.d("alexx", " -= " + TimeUnit.MILLISECONDS.toMinutes(post));
+//            Log.d("alexx", " -= " + TimeUnit.MILLISECONDS.toMinutes(post));
         }
 
         return getProgramSliceWidth(relatedRuntime);
@@ -75,5 +75,22 @@ public class Utils {
         } catch (ParseException e) {}
 
         return date;
+    }
+
+    private static final String SHARED_PREFERENCES_NAME = "program_list_settings";
+    private static final String KEY_CUSTOM_CHANNELS = "custom_channels";
+
+    private static SharedPreferences getSharedPreferences(Context context) {
+        return context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+    }
+
+    public static void saveCustomSelectedChannels(Context context, Set<String> selected) {
+        SharedPreferences.Editor editor = getSharedPreferences(context).edit();
+        editor.putStringSet(KEY_CUSTOM_CHANNELS, selected).apply();
+    }
+
+    public static Set<String> loadCustomSelectedChannels(Context context) {
+        SharedPreferences spref = getSharedPreferences(context);
+        return spref.getStringSet(KEY_CUSTOM_CHANNELS, Collections.<String>emptySet());
     }
 }

@@ -1,6 +1,12 @@
 package tv.hillsbrad.com.tvprogramlist;
 
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -14,9 +20,9 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import tv.hillsbrad.com.App;
 import tv.hillsbrad.com.Utils;
 import tv.hillsbrad.com.yahoo.YahooTvConstant;
-import tv.hillsbrad.com.yahoo.YahooTvTimeParser;
 import tv.hillsbrad.com.model.Channel;
 import tv.hillsbrad.com.model.ChannelGroup;
 import tv.hillsbrad.com.model.Program;
@@ -25,6 +31,8 @@ import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
+
+    public static String REFRESH_UI_ACTION = "tv.hillsbrad.intent.action.REFRESH_UI";
 
     private LinearLayout mChannelTitleLayout;
     private LinearLayout mProgramDurationLayout;
@@ -40,6 +48,18 @@ public class MainActivity extends AppCompatActivity {
     private ModelController mModelController;
 
     ArrayAdapter<String> mSpinnerAdapter;
+
+    public class UIRefreshReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("alexx", "onReceive");
+            refreshUI();
+        }
+    }
+
+    private final UIRefreshReceiver mReceiver = new UIRefreshReceiver();
+
+    private IntentFilter mIntentFilter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,9 +79,10 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
 
+        mIntentFilter = new IntentFilter(REFRESH_UI_ACTION);
 
 //        mViewController = new ViewController();
-        mModelController = new ModelController();
+        mModelController = ModelController.getInstance();
 
         mChannelTitleLayout = (LinearLayout) findViewById(R.id.channel_title_layout);
         TextView textView = new TextView(MainActivity.this);
@@ -88,10 +109,26 @@ public class MainActivity extends AppCompatActivity {
         });
 
         searchMore(true);
+    }
 
-        CustomChannelSettings channelSettings = new CustomChannelSettings();
-        channelSettings.show(getSupportFragmentManager(),
-                CustomChannelSettings.class.getSimpleName());
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, mIntentFilter);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
+    }
+
+    @Override
+    public void onDestroy() {
+        mModelController.clear();
+        super.onDestroy();
     }
 
     public void initSpinner() {
@@ -131,12 +168,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void search(final boolean next) {
 //        if (!mTimeController.isSearched()) {
-            new Thread() {
-                public void run() {
+//            new Thread() {
+//                public void run() {
                     mModelController.parseMoreDataFromHttp(next);
-                    refreshUI();
-                }
-            }.start();
+//                    refreshUI();
+//                }
+//            }.start();
+
+
 
 //                    if (channelGroup != null) {
 //                        runOnUiThread(new Runnable() {
@@ -308,57 +347,60 @@ public class MainActivity extends AppCompatActivity {
 
                 ChannelGroup channelGroup = mModelController.getModel();
 
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(channelGroup.getSearchingStartDate());
-                int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
-                long duration = channelGroup.getSearchingEndDate().getTime() -
-                        channelGroup.getSearchingStartDate().getTime();
-                long hours = TimeUnit.MILLISECONDS.toHours(duration);
+                if (channelGroup.isReadyToPresent()) {
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime(channelGroup.getSearchingStartDate());
+                    int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
+                    long duration = channelGroup.getSearchingEndDate().getTime() -
+                            channelGroup.getSearchingStartDate().getTime();
+                    long hours = TimeUnit.MILLISECONDS.toHours(duration);
 
-                ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
-                        Utils.getSliceBacisWidth(MainActivity.this), ViewGroup.LayoutParams.WRAP_CONTENT);
-                for (int i = 0; i < hours; i++) {
-                    textView = new TextView(MainActivity.this);
-                    textView.setText(Utils.toHourOfDayString((currentHour + i) % 24));
-                    textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, (currentHour + i) % 24));
-                    textView.setLayoutParams(params);
-                    mTimeSliceLayout.addView(textView);
-                }
-
-
-                int channelCount = 0;
-                for (Channel channel : channelGroup.getChannels().values()) {
-                    // channel title
-                    textView = new TextView(MainActivity.this);
-                    textView.setText(channel.getTitle());
-                    if (channelCount++ % 2 == 0) {
-                        textView.setBackgroundColor(getResources().getColor(R.color.colorChannelTitleBg, null));
-                    }
-                    mChannelTitleLayout.addView(textView);
-                    Log.d("alexx", channel.getTitle());
-
-                    // channel content
-                    LinearLayout channelSliceLayout = new LinearLayout(MainActivity.this);
-                    channelSliceLayout.setOrientation(LinearLayout.HORIZONTAL);
-                    mProgramDurationLayout.addView(channelSliceLayout);
-                    for (Program program : channel.getPrograms()) {
-                        params = new ViewGroup.LayoutParams(
-                                Utils.getRelatedProgramSliceWidth(program,
-                                        mModelController.getModel().getSearchingStartDate(),
-                                        mModelController.getModel().getSearchingEndDate()),
-                                ViewGroup.LayoutParams.WRAP_CONTENT);
+                    ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
+                            Utils.getSliceBacisWidth(MainActivity.this), ViewGroup.LayoutParams.WRAP_CONTENT);
+                    for (int i = 0; i < hours; i++) {
                         textView = new TextView(MainActivity.this);
-                        textView.setText(program.getTitle() + "/" + program.getTime());
-                        textView.setBackground(getResources().getDrawable(R.drawable.program_textview, null));
+                        textView.setText(Utils.toHourOfDayString((currentHour + i) % 24));
+                        textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, (currentHour + i) % 24));
                         textView.setLayoutParams(params);
-                        textView.setHorizontallyScrolling(true);
-                        textView.setSingleLine(true);
-                        channelSliceLayout.addView(textView);
-
-                        Log.d("alexx", "____" + params.width + " / " + program.toString());
+                        mTimeSliceLayout.addView(textView);
                     }
+
+
+                    int channelCount = 0;
+                    for (Channel channel : channelGroup.getChannels().values()) {
+                        // channel title
+                        textView = new TextView(MainActivity.this);
+                        textView.setText(channel.getTitle());
+                        if (channelCount++ % 2 == 0) {
+                            textView.setBackgroundColor(getResources().getColor(R.color.colorChannelTitleBg, null));
+                        }
+                        mChannelTitleLayout.addView(textView);
+//                    Log.d("alexx", channel.getTitle());
+
+                        // channel content
+                        LinearLayout channelSliceLayout = new LinearLayout(MainActivity.this);
+                        channelSliceLayout.setOrientation(LinearLayout.HORIZONTAL);
+                        mProgramDurationLayout.addView(channelSliceLayout);
+                        for (Program program : channel.getPrograms()) {
+                            params = new ViewGroup.LayoutParams(
+                                    Utils.getRelatedProgramSliceWidth(program,
+                                            mModelController.getModel().getSearchingStartDate(),
+                                            mModelController.getModel().getSearchingEndDate()),
+                                    ViewGroup.LayoutParams.WRAP_CONTENT);
+                            textView = new TextView(MainActivity.this);
+                            textView.setText(program.getTitle() + "/" + program.getTime());
+                            textView.setBackground(getResources().getDrawable(R.drawable.program_textview, null));
+                            textView.setLayoutParams(params);
+                            textView.setHorizontallyScrolling(true);
+                            textView.setSingleLine(true);
+                            channelSliceLayout.addView(textView);
+
+//                        Log.d("alexx", "____" + params.width + " / " + program.toString());
+                        }
 //                    mViewController.add(channel.getTitle(), channelSliceLayout);
+                    }
                 }
+
                 mIsProcessing = false;
                 mPreviousButton.setEnabled(true);
                 mNextButton.setEnabled(true);
@@ -382,7 +424,11 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_custom_channel_settings) {
+            CustomChannelSettings channelSettings = new CustomChannelSettings();
+
+            channelSettings.show(getSupportFragmentManager(),
+                    CustomChannelSettings.class.getSimpleName());
             return true;
         }
 

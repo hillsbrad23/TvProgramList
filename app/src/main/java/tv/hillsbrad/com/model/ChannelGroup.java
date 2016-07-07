@@ -2,6 +2,7 @@ package tv.hillsbrad.com.model;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 
 import tv.hillsbrad.com.yahoo.YahooTvConstant;
@@ -14,6 +15,8 @@ public class ChannelGroup {
 
     private Date mSearchingStartDate;
     private Date mSearchingEndDate;
+
+    private boolean mIsReadyToPresent;
 
     public ChannelGroup() {
         mChannels = new LinkedHashMap<>();
@@ -38,6 +41,8 @@ public class ChannelGroup {
     }
 
     public void setProcessDate(Date startDate) {
+        mIsReadyToPresent = true;
+
         mSearchingStartDate = startDate;
 
         Calendar endCal = Calendar.getInstance();
@@ -64,5 +69,15 @@ public class ChannelGroup {
                 mChannels.put(channel.getTitle(), channel);
             }
         }
+    }
+
+    public void removeChannels(HashSet<String> notSelected) {
+        for (String title: notSelected) {
+            mChannels.remove(title);
+        }
+    }
+
+    public boolean isReadyToPresent() {
+        return mSearchingStartDate != null && mSearchingEndDate != null;
     }
 }

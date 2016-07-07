@@ -1,1 +1,1 @@
-include ':app', ':webparser'
+include ':app'

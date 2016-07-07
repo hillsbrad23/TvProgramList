@@ -1,16 +1,18 @@
 package tv.hillsbrad.com.yahoo;
 
+import tv.hillsbrad.com.tvprogramlist.R;
+
 /**
  * Created by alex on 2016/4/14.
  */
 public class YahooTvConstant {
 
     public final static int[] CHANNEL_TYPE = {
-            com.example.R.string.channel_type_one, com.example.R.string.channel_type_two, com.example.R.string.channel_type_three,
-            com.example.R.string.channel_type_four, com.example.R.string.channel_type_five, com.example.R.string.channel_type_six,
-            com.example.R.string.channel_type_seven, com.example.R.string.channel_type_eight, com.example.R.string.channel_type_nine,
-            com.example.R.string.channel_type_ten, com.example.R.string.channel_type_eleven, com.example.R.string.channel_type_twelve,
-            com.example.R.string.channel_type_thirteen};
+            R.string.channel_type_one, R.string.channel_type_two, R.string.channel_type_three,
+            R.string.channel_type_four, R.string.channel_type_five, R.string.channel_type_six,
+            R.string.channel_type_seven, R.string.channel_type_eight, R.string.channel_type_nine,
+            R.string.channel_type_ten, R.string.channel_type_eleven, R.string.channel_type_twelve,
+            R.string.channel_type_thirteen};
 
     public enum Group {
         ONE(1),
@@ -25,7 +27,7 @@ public class YahooTvConstant {
         TEN(10),
         ELEVEN(11),
         TWELVE(12),
-        THIRTEEN(13);
+        THIRTEEN(13);   // custom
 
         private int value;
 
@@ -84,7 +86,49 @@ public class YahooTvConstant {
                     groupDefault = THIRTEEN;
                     break;
             }
+            return groupDefault;
+        }
 
+        public static Group convertResIdToGroup(int resId) {
+            Group groupDefault = ONE;
+            switch (resId) {
+                case R.string.channel_type_one:
+                    groupDefault = ONE;
+                    break;
+                case R.string.channel_type_two:
+                    groupDefault = TWO;
+                    break;
+                case R.string.channel_type_three:
+                    groupDefault = THREE;
+                    break;
+                case R.string.channel_type_four:
+                    groupDefault = FOUR;
+                    break;
+                case R.string.channel_type_five:
+                    groupDefault = FIVE;
+                    break;
+                case R.string.channel_type_six:
+                    groupDefault = SIX;
+                    break;
+                case R.string.channel_type_seven:
+                    groupDefault = SEVEN;
+                    break;
+                case R.string.channel_type_eight:
+                    groupDefault = EIGHT;
+                    break;
+                case R.string.channel_type_nine:
+                    groupDefault = NINE;
+                    break;
+                case R.string.channel_type_ten:
+                    groupDefault = TEN;
+                    break;
+                case R.string.channel_type_eleven:
+                    groupDefault = ELEVEN;
+                    break;
+                case R.string.channel_type_twelve:
+                    groupDefault = TWELVE;
+                    break;
+            }
             return groupDefault;
         }
     };
@@ -98,27 +142,27 @@ public class YahooTvConstant {
     public final static int PREDICT_RUNTIME_NO_MARE_THAN = 10; //hour
 
     public static int[][] sChannelMapping = {
-            {com.example.R.string.one_one, com.example.R.string.one_two, com.example.R.string.one_three, com.example.R.string.one_four,
-                com.example.R.string.one_five, com.example.R.string.one_six, com.example.R.string.one_seven},
-            {com.example.R.string.two_one, com.example.R.string.two_two, com.example.R.string.two_three, com.example.R.string.two_four},
-            {com.example.R.string.three_one, com.example.R.string.three_two, com.example.R.string.three_three, com.example.R.string.three_four},
-            {com.example.R.string.four_one, com.example.R.string.four_two, com.example.R.string.four_three},
-            {com.example.R.string.five_one, com.example.R.string.five_two, com.example.R.string.five_three, com.example.R.string.five_four,
-                    com.example.R.string.five_five, com.example.R.string.five_six, com.example.R.string.five_seven, com.example.R.string.five_eight,
-                    com.example.R.string.five_nine, com.example.R.string.five_ten, com.example.R.string.five_eleven, com.example.R.string.five_twelve,
-                    com.example.R.string.five_thirteen, com.example.R.string.five_fourteen, com.example.R.string.five_fifteen, com.example.R.string.five_sixteen,
-                    com.example.R.string.five_seventeen, com.example.R.string.five_eighteen, com.example.R.string.five_nineteen, com.example.R.string.five_twenty,
-                    com.example.R.string.five_twenty_one, com.example.R.string.five_twenty_two, com.example.R.string.five_twenty_three, com.example.R.string.five_twenty_four,
-                    com.example.R.string.five_twenty_five, com.example.R.string.five_twenty_six, com.example.R.string.five_twenty_seven, com.example.R.string.five_twenty_eight,
-                    com.example.R.string.five_twenty_nine},
-            {com.example.R.string.six_one, com.example.R.string.six_two, com.example.R.string.six_three, com.example.R.string.six_four},
-            {com.example.R.string.seven_one, com.example.R.string.seven_two, com.example.R.string.seven_three, com.example.R.string.seven_four},
-            {com.example.R.string.eight_one},
-            {com.example.R.string.nine_one, com.example.R.string.nine_two, com.example.R.string.nine_three, com.example.R.string.nine_four, com.example.R.string.nine_five},
-            {com.example.R.string.ten_one, com.example.R.string.ten_two, com.example.R.string.ten_three, com.example.R.string.ten_four,
-                    com.example.R.string.ten_five, com.example.R.string.ten_six, com.example.R.string.ten_seven, com.example.R.string.ten_eight},
-            {com.example.R.string.eleven_one, com.example.R.string.eleven_two, com.example.R.string.eleven_three},
-            {com.example.R.string.twelve_one, com.example.R.string.twelve_two, com.example.R.string.twelve_three}};
+            {R.string.one_one, R.string.one_two, R.string.one_three, R.string.one_four,
+                R.string.one_five, R.string.one_six, R.string.one_seven},
+            {R.string.two_one, R.string.two_two, R.string.two_three, R.string.two_four},
+            {R.string.three_one, R.string.three_two, R.string.three_three, R.string.three_four},
+            {R.string.four_one, R.string.four_two, R.string.four_three},
+            {R.string.five_one, R.string.five_two, R.string.five_three, R.string.five_four,
+                    R.string.five_five, R.string.five_six, R.string.five_seven, R.string.five_eight,
+                    R.string.five_nine, R.string.five_ten, R.string.five_eleven, R.string.five_twelve,
+                    R.string.five_thirteen, R.string.five_fourteen, R.string.five_fifteen, R.string.five_sixteen,
+                    R.string.five_seventeen, R.string.five_eighteen, R.string.five_nineteen, R.string.five_twenty,
+                    R.string.five_twenty_one, R.string.five_twenty_two, R.string.five_twenty_three, R.string.five_twenty_four,
+                    R.string.five_twenty_five, R.string.five_twenty_six, R.string.five_twenty_seven, R.string.five_twenty_eight,
+                    R.string.five_twenty_nine},
+            {R.string.six_one, R.string.six_two, R.string.six_three, R.string.six_four},
+            {R.string.seven_one, R.string.seven_two, R.string.seven_three, R.string.seven_four},
+            {R.string.eight_one},
+            {R.string.nine_one, R.string.nine_two, R.string.nine_three, R.string.nine_four, R.string.nine_five},
+            {R.string.ten_one, R.string.ten_two, R.string.ten_three, R.string.ten_four,
+                    R.string.ten_five, R.string.ten_six, R.string.ten_seven, R.string.ten_eight},
+            {R.string.eleven_one, R.string.eleven_two, R.string.eleven_three},
+            {R.string.twelve_one, R.string.twelve_two, R.string.twelve_three}};
 
     public static int getChannelNameRes(int group, int channel) {
         if (channel < sChannelMapping[group-1].length) {

@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="tv.hillsbrad.com.tvprogramlist.MainActivity">
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/action_custom_channel_settings"
         android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:title="@string/action_custom_channel_settings"
         app:showAsAction="never" />
 </menu>
