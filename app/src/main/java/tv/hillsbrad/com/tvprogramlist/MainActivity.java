@@ -1,23 +1,26 @@
 package tv.hillsbrad.com.tvprogramlist;
 
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 
 import tv.hillsbrad.com.App;
@@ -27,6 +30,7 @@ import tv.hillsbrad.com.model.Channel;
 import tv.hillsbrad.com.model.ChannelGroup;
 import tv.hillsbrad.com.model.Program;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton mNextButton;
     private boolean mIsProcessing;
 
-//    private ViewController mViewController;
     private ModelController mModelController;
 
     ArrayAdapter<String> mSpinnerAdapter;
@@ -85,8 +88,6 @@ public class MainActivity extends AppCompatActivity {
         mModelController = ModelController.getInstance();
 
         mChannelTitleLayout = (LinearLayout) findViewById(R.id.channel_title_layout);
-        TextView textView = new TextView(MainActivity.this);
-        mChannelTitleLayout.addView(textView);
         mProgramDurationLayout = (LinearLayout) findViewById(R.id.program_duration_layout);
         mTimeSliceLayout = (LinearLayout) findViewById(R.id.time_slice_layout);
 
@@ -132,12 +133,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void initSpinner() {
+        ArrayList<String> channels2 = new ArrayList<>();
+
         String[] channels = new String[YahooTvConstant.CHANNEL_TYPE.length];
         for (int i = 0; i < YahooTvConstant.CHANNEL_TYPE.length; i++) {
             channels[i] = getString(YahooTvConstant.CHANNEL_TYPE[i]);
+            channels2.add(getString(YahooTvConstant.CHANNEL_TYPE[i]));
         }
-        mSpinnerAdapter= new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, channels);
-        mTypeSpinner.setAdapter(mSpinnerAdapter);
+
+        CustomSpinnerAdapter customSpinnerAdapter = new CustomSpinnerAdapter(this, channels2);
+        mTypeSpinner.setAdapter(customSpinnerAdapter);
         mTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -341,6 +346,7 @@ public class MainActivity extends AppCompatActivity {
                 //clear UI
                 mChannelTitleLayout.removeAllViews();
                 TextView textView = new TextView(MainActivity.this);
+                textView.setPadding(10, 10, 10, 10);
                 mChannelTitleLayout.addView(textView);
                 mProgramDurationLayout.removeAllViews();
                 mTimeSliceLayout.removeAllViews();
@@ -362,6 +368,8 @@ public class MainActivity extends AppCompatActivity {
                         textView.setText(Utils.toHourOfDayString((currentHour + i) % 24));
                         textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, (currentHour + i) % 24));
                         textView.setLayoutParams(params);
+                        textView.setTextSize(14);
+                        textView.setPadding(10, 10, 10, 10);
                         mTimeSliceLayout.addView(textView);
                     }
 
@@ -371,11 +379,12 @@ public class MainActivity extends AppCompatActivity {
                         // channel title
                         textView = new TextView(MainActivity.this);
                         textView.setText(channel.getTitle());
+                        textView.setTextSize(14);
+                        textView.setPadding(10, 10, 10, 10);
                         if (channelCount++ % 2 == 0) {
                             textView.setBackgroundColor(getResources().getColor(R.color.colorChannelTitleBg, null));
                         }
                         mChannelTitleLayout.addView(textView);
-//                    Log.d("alexx", channel.getTitle());
 
                         // channel content
                         LinearLayout channelSliceLayout = new LinearLayout(MainActivity.this);
@@ -393,11 +402,10 @@ public class MainActivity extends AppCompatActivity {
                             textView.setLayoutParams(params);
                             textView.setHorizontallyScrolling(true);
                             textView.setSingleLine(true);
+                            textView.setTextSize(14);
+                            textView.setPadding(10, 10, 10, 10);
                             channelSliceLayout.addView(textView);
-
-//                        Log.d("alexx", "____" + params.width + " / " + program.toString());
                         }
-//                    mViewController.add(channel.getTitle(), channelSliceLayout);
                     }
                 }
 
@@ -435,4 +443,50 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
+    class CustomSpinnerAdapter extends BaseAdapter implements SpinnerAdapter {
+
+        private final Context activity;
+        private ArrayList<String> asr;
+
+        public CustomSpinnerAdapter(Context context, ArrayList<String> asr) {
+            this.asr = asr;
+            activity = context;
+        }
+
+        public int getCount() {
+            return asr.size();
+        }
+
+        public Object getItem(int i) {
+            return asr.get(i);
+        }
+
+        public long getItemId(int i) {
+            return (long)i;
+        }
+
+        @Override
+        public View getDropDownView(int position, View convertView, ViewGroup parent) {
+            TextView txt = new TextView(MainActivity.this);
+            txt.setPadding(10, 10, 10, 10);
+            txt.setTextSize(16);
+            txt.setGravity(Gravity.CENTER_VERTICAL);
+            txt.setText(asr.get(position));
+            txt.setTextColor(Color.parseColor("#000000"));
+            return  txt;
+        }
+
+        public View getView(int i, View view, ViewGroup viewgroup) {
+            TextView txt = new TextView(MainActivity.this);
+            txt.setGravity(Gravity.CENTER);
+            txt.setPadding(16, 5, 16, 5);
+            txt.setTextSize(16);
+            txt.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_down, 0);
+            txt.setText(asr.get(i));
+            txt.setTextColor(Color.parseColor("#000000"));
+            return  txt;
+        }
+
+    }
 }

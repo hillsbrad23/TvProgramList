@@ -42,7 +42,6 @@ public class CustomChannelSettings extends AppCompatDialogFragment
      * The variable is related to whether parse program data from web.
      * If value > 0 yes, otherwise no.
      */
-    /
     private int[] mSelectedCountByChannelType;
 
     private boolean[] mIsExpandWhenInitView;

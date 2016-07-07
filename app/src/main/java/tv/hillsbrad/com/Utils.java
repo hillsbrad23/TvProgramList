@@ -60,7 +60,6 @@ public class Utils {
         if (program.getEndDate().getTime() > viewEndDate.getTime()) {
             long post = program.getEndDate().getTime() - viewEndDate.getTime();
             relatedRuntime -= TimeUnit.MILLISECONDS.toMinutes(post);
-//            Log.d("alexx", " -= " + TimeUnit.MILLISECONDS.toMinutes(post));
         }
 
         return getProgramSliceWidth(relatedRuntime);
