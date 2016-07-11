@@ -99,8 +99,6 @@ public class ModelController {
     }
 
     public void parseMoreDataFromHttp(final boolean next) {
-        Log.d("alexx", "parseMoreDataFromHttp");
-
         if (mCurrentGroup == YahooTvConstant.Group.THIRTEEN) {  // custom type
             parseMoreCustomDataFromHttp(next);
             return;
@@ -113,7 +111,7 @@ public class ModelController {
 
                 ChannelGroup channelGroup = YahooTvTimeParser.parse(mCurrentGroup, getQueryDate(next));
                 attach(channelGroup);
-                notifyUpdate();
+                notifyUpdate(next);
             }
         }.start();
 
@@ -122,14 +120,12 @@ public class ModelController {
 //        attach(channelGroup);
     }
 
-    private void parseMoreCustomDataFromHttp(boolean next) {
-        Log.d("alexx", "parseMoreCustomDataFromHttp - " + mCustomSelectedTypes.size());
-
+    private void parseMoreCustomDataFromHttp(final boolean next) {
         final Calendar calendar = getQueryDate(next);
         mWaitToParseCount = 0;
 
         if (mCustomSelectedTypes.size() == 0) {
-            notifyUpdate();
+            notifyUpdate(next);
             return;
         }
 
@@ -154,19 +150,18 @@ public class ModelController {
                     }
                     channelGroup.removeChannels(notSelected);
                     attach(channelGroup);
-                    notifyUpdate();
+                    notifyUpdate(next);
                 }
             }.start();
         }
     }
 
-    public void notifyUpdate() {
+    private void notifyUpdate(boolean next) {
         synchronized (this) {
             if (mWaitToParseCount > 0) mWaitToParseCount--;
-            Log.d("alexx", "notifyUpdate mWaitToParseCount=" + mWaitToParseCount);
             if (mWaitToParseCount == 0) {
-                Log.d("alexx", "broadcast REFRESH_UI");
                 Intent in = new Intent(MainActivity.REFRESH_UI_ACTION);
+                in.putExtra(MainActivity.SEARCH_NEXT, next);
                 LocalBroadcastManager.getInstance(App.getContext()).sendBroadcast(in);
             } else {
                 // FIXME add timer to trigger update

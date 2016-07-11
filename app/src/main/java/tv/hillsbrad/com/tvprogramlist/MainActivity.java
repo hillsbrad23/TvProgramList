@@ -12,11 +12,13 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -37,10 +39,12 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
 
     public static String REFRESH_UI_ACTION = "tv.hillsbrad.intent.action.REFRESH_UI";
+    public static String SEARCH_NEXT = "search_next";
 
     private LinearLayout mChannelTitleLayout;
     private LinearLayout mProgramDurationLayout;
     private LinearLayout mTimeSliceLayout;
+    private HorizontalScrollView mProgramScrollView;
 
     private Spinner mTypeSpinner;
 
@@ -50,13 +54,13 @@ public class MainActivity extends AppCompatActivity {
 
     private ModelController mModelController;
 
-    ArrayAdapter<String> mSpinnerAdapter;
+    private int mBasicMeasureViewWidth = -1;
 
     public class UIRefreshReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("alexx", "onReceive");
-            refreshUI();
+            boolean next = intent.getBooleanExtra(SEARCH_NEXT, true);
+            refreshUI(next);
         }
     }
 
@@ -84,12 +88,35 @@ public class MainActivity extends AppCompatActivity {
 
         mIntentFilter = new IntentFilter(REFRESH_UI_ACTION);
 
-//        mViewController = new ViewController();
         mModelController = ModelController.getInstance();
 
         mChannelTitleLayout = (LinearLayout) findViewById(R.id.channel_title_layout);
         mProgramDurationLayout = (LinearLayout) findViewById(R.id.program_duration_layout);
         mTimeSliceLayout = (LinearLayout) findViewById(R.id.time_slice_layout);
+        mProgramScrollView = (HorizontalScrollView) findViewById(R.id.program_scroll_view);
+        mProgramScrollView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_UP:
+                        int x = v.getScrollX();
+                        int width = v.getWidth();
+                        int measureWidth = mProgramScrollView.getChildAt(0).getMeasuredWidth();
+
+                        if (mBasicMeasureViewWidth == -1) {
+                            mBasicMeasureViewWidth = mTimeSliceLayout.getChildAt(0).getMeasuredWidth() * 2;
+                        }
+
+                        if (x == 0) {
+                            searchMore(false);
+                        } else if (x + width >= measureWidth) {
+                            searchMore(true);
+                        }
+                        break;
+                }
+                return false;
+            }
+        });
 
         mTypeSpinner = (Spinner) findViewById(R.id.type_spinner);
         initSpinner();
@@ -147,19 +174,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (!mIsProcessing) {
-                    Log.d("alexx", "item selected: " + parent.getItemAtPosition(position));
                     mModelController.setCurrentGroup(YahooTvConstant.Group.convertToGroup(position + 1));
 
-
-                    Log.d("alexx", "currentGroup=" + mModelController.getCurrentGroup().getValue());
-                    if (mModelController.getModel().getSearchingStartDate() == null &&
-                            mModelController.getModel().getSearchingEndDate() == null) {
+                    if (!mModelController.getModel().isReadyToPresent()) {
                         searchMore(true);
                     } else {
-                        Log.d("alexx", "data already existed");
-                        Log.d("alexx", mModelController.getModel().getSearchingStartDate().toString() + "/" +
-                                mModelController.getModel().getSearchingEndDate());
-                        refreshUI();
+                        refreshUI(true);
                     }
                 }
             }
@@ -172,6 +192,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void search(final boolean next) {
+
+        Log.d("alexx", "search(" + next + ")");
+
 //        if (!mTimeController.isSearched()) {
 //            new Thread() {
 //                public void run() {
@@ -327,22 +350,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void searchMore(boolean next) {
-        if (!mIsProcessing) {
-            mIsProcessing = true;
-            mPreviousButton.setEnabled(false);
-            mNextButton.setEnabled(false);
-            mTypeSpinner.setEnabled(false);
+        synchronized (this) {
+            if (!mIsProcessing) {
+                mIsProcessing = true;
+                mPreviousButton.setEnabled(false);
+                mNextButton.setEnabled(false);
+                mTypeSpinner.setEnabled(false);
 
-            search(next);
+                search(next);
+            } else {
+                Log.d("alexx", "search is processing");
+            }
         }
     }
 
-    public void refreshUI() {
-        Log.d("alexx", "refreshUI");
+    public void refreshUI(final boolean next) {
+        Log.d("alexx", "refreshUI " + next);
 
         runOnUiThread(new Runnable() {
             public void run() {
-
                 //clear UI
                 mChannelTitleLayout.removeAllViews();
                 TextView textView = new TextView(MainActivity.this);
@@ -409,7 +435,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                mIsProcessing = false;
+                if (!next && mBasicMeasureViewWidth != -1) {
+                    mProgramScrollView.setScrollX(mBasicMeasureViewWidth);
+                }
+
+                synchronized (MainActivity.this) {
+                    mIsProcessing = false;
+                }
                 mPreviousButton.setEnabled(true);
                 mNextButton.setEnabled(true);
                 mTypeSpinner.setEnabled(true);
