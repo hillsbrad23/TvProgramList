@@ -18,6 +18,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="@dimen/button_margin">
+
+
+        <Button
+            android:id="@+id/clear_model_data_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"/>
+
+
         <ImageButton
             android:id="@+id/previous_button"
             android:layout_width="wrap_content"

@@ -16,8 +16,6 @@ public class ChannelGroup {
     private Date mSearchingStartDate;
     private Date mSearchingEndDate;
 
-    private boolean mIsReadyToPresent;
-
     public ChannelGroup() {
         mChannels = new LinkedHashMap<>();
     }
@@ -41,8 +39,6 @@ public class ChannelGroup {
     }
 
     public void setProcessDate(Date startDate) {
-        mIsReadyToPresent = true;
-
         mSearchingStartDate = startDate;
 
         Calendar endCal = Calendar.getInstance();

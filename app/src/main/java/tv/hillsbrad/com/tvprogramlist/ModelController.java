@@ -193,10 +193,9 @@ public class ModelController {
     public void clear() {
         mCurrentGroup = null;
         mChannelsGroup = null;
+        mChannelsGroup = new ChannelGroup[YahooTvConstant.Group.values().length];
         mCustomSelectedChannels.clear();
-        mCustomSelectedChannels = null;
         mCustomSelectedTypes.clear();
-        mCustomSelectedTypes = null;
         sInstance = null;
     }
 }

@@ -45,8 +45,13 @@ public class Utils {
         return sSliceBasicWidth;
     }
 
-    public static int getProgramSliceWidth(int runtime) {  //width per hour
+    public static int getProgramSliceWidth(long runtime) {  //width per hour
         return (int) (runtime * sSliceBasicWidth / 60.0f);
+    }
+
+    public static int getEmptySliceWidth(Date startDate, Date endDate) {
+        long time = endDate.getTime() - startDate.getTime();
+        return getProgramSliceWidth(TimeUnit.MILLISECONDS.toMinutes(time));
     }
 
     public static int getRelatedProgramSliceWidth(Program program, Date viewStartDate, Date viewEndDate) {

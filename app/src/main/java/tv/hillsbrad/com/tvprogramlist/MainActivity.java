@@ -16,8 +16,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -25,7 +25,6 @@ import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 
-import tv.hillsbrad.com.App;
 import tv.hillsbrad.com.Utils;
 import tv.hillsbrad.com.yahoo.YahooTvConstant;
 import tv.hillsbrad.com.model.Channel;
@@ -34,6 +33,7 @@ import tv.hillsbrad.com.model.Program;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
@@ -51,6 +51,11 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton mPreviousButton;
     private ImageButton mNextButton;
     private boolean mIsProcessing;
+
+
+    // for test
+    private Button mClearButton;
+
 
     private ModelController mModelController;
 
@@ -85,6 +90,18 @@ public class MainActivity extends AppCompatActivity {
 //                        .setAction("Action", null).show();
 //            }
 //        });
+
+
+        // for test
+        mClearButton = (Button) findViewById(R.id.clear_model_data_button);
+        mClearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                YahooTvConstant.Group current = mModelController.getCurrentGroup();
+                mModelController.clear();
+                mModelController.setCurrentGroup(current);
+                searchMore(true);            }
+        });
 
         mIntentFilter = new IntentFilter(REFRESH_UI_ACTION);
 
@@ -399,10 +416,9 @@ public class MainActivity extends AppCompatActivity {
                         mTimeSliceLayout.addView(textView);
                     }
 
-
                     int channelCount = 0;
                     for (Channel channel : channelGroup.getChannels().values()) {
-                        // channel title
+                        /** channel title **/
                         textView = new TextView(MainActivity.this);
                         textView.setText(channel.getTitle());
                         textView.setTextSize(14);
@@ -412,15 +428,25 @@ public class MainActivity extends AppCompatActivity {
                         }
                         mChannelTitleLayout.addView(textView);
 
-                        // channel content
-                        LinearLayout channelSliceLayout = new LinearLayout(MainActivity.this);
-                        channelSliceLayout.setOrientation(LinearLayout.HORIZONTAL);
-                        mProgramDurationLayout.addView(channelSliceLayout);
+                        /** channel content **/
+                        LinearLayout channelContentLayout = new LinearLayout(MainActivity.this);
+                        channelContentLayout.setOrientation(LinearLayout.HORIZONTAL);
+                        mProgramDurationLayout.addView(channelContentLayout);
+
+                        // for time of yahoo program model error handle
+                        ArrayList<LinearLayout> reusedErrorLayout = new ArrayList<LinearLayout>();
+                        ArrayList<Long> reusedLayoutStartTime = new ArrayList<Long>();
+                        ArrayList<Long> reusedLayoutEndTime = new ArrayList<Long>();
+
+                        LinearLayout yahooTimeErrorLayout = null;
+                        long errorStartTime = 0, errorEndTime = 0;
+
+                        boolean firstProgram = true;
                         for (Program program : channel.getPrograms()) {
-                            params = new ViewGroup.LayoutParams(
+                            params = new LinearLayout.LayoutParams(
                                     Utils.getRelatedProgramSliceWidth(program,
-                                            mModelController.getModel().getSearchingStartDate(),
-                                            mModelController.getModel().getSearchingEndDate()),
+                                            channelGroup.getSearchingStartDate(),
+                                            channelGroup.getSearchingEndDate()),
                                     ViewGroup.LayoutParams.WRAP_CONTENT);
                             textView = new TextView(MainActivity.this);
                             textView.setText(program.getTitle() + "/" + program.getTime());
@@ -430,7 +456,85 @@ public class MainActivity extends AppCompatActivity {
                             textView.setSingleLine(true);
                             textView.setTextSize(14);
                             textView.setPadding(10, 10, 10, 10);
-                            channelSliceLayout.addView(textView);
+
+                            // fix Yahoo data is not well-formed
+                            // query h=16
+                            // 04:30PM~05:00PM xxx
+                            // 05:00PM~07:00PM yyy
+                            if (firstProgram) {
+                                firstProgram = false;
+                                if (program.getStartDate().getTime() >
+                                        channelGroup.getSearchingStartDate().getTime()) {
+
+                                    params = new ViewGroup.LayoutParams(
+                                            Utils.getEmptySliceWidth(channelGroup.getSearchingStartDate(),
+                                                    program.getStartDate()),
+                                            ViewGroup.LayoutParams.WRAP_CONTENT);
+
+                                    TextView emptyTextView = new TextView(MainActivity.this);
+                                    emptyTextView.setBackground(getResources().getDrawable(R.drawable.program_textview, null));
+                                    emptyTextView.setLayoutParams(params);
+                                    emptyTextView.setPadding(10, 10, 10, 10);
+                                    channelContentLayout.addView(emptyTextView);
+                                }
+                            }
+
+                            if (program.hasYahooTimeProblem()) {
+                                textView.setTextColor(Color.RED);
+
+                                if (yahooTimeErrorLayout == null) {
+                                    yahooTimeErrorLayout = new LinearLayout(MainActivity.this);
+                                    yahooTimeErrorLayout.setOrientation(LinearLayout.VERTICAL);
+                                    errorStartTime = 0;
+                                    errorEndTime = 0;
+                                }
+
+                                if (errorStartTime == 0 || program.getStartDate().getTime() < errorStartTime) {
+                                    if (program.getStartDate().getTime() < channelGroup.getSearchingStartDate().getTime()) {
+                                        errorStartTime = channelGroup.getSearchingStartDate().getTime();
+                                    } else {
+                                        errorStartTime = program.getStartDate().getTime();
+                                    }
+                                }
+                                if (errorEndTime == 0 || program.getEndDate().getTime() > errorEndTime) {
+                                    errorEndTime = program.getEndDate().getTime();
+                                }
+
+                                if (program.getStartDate().getTime() > errorStartTime) {
+                                    ((LinearLayout.LayoutParams) textView.getLayoutParams())
+                                            .setMarginStart(Utils.getEmptySliceWidth(new Date(errorStartTime),
+                                                    program.getStartDate()));
+                                    Log.d("alexx", textView.getText() + " setMargin " + Utils.getEmptySliceWidth(new Date(errorStartTime),
+                                            program.getStartDate()));
+                                }
+
+                                yahooTimeErrorLayout.addView(textView);
+                            } else {
+                                if (yahooTimeErrorLayout != null) {
+                                    channelContentLayout.addView(yahooTimeErrorLayout);
+                                    for (int i = 1; i < yahooTimeErrorLayout.getChildCount(); i++) {
+                                        TextView emptyView = new TextView(MainActivity.this);
+                                        emptyView.setTextSize(14);
+                                        emptyView.setPadding(10, 10, 10, 10);
+                                        mChannelTitleLayout.addView(emptyView);
+                                    }
+
+                                    yahooTimeErrorLayout = null;
+                                }
+                                channelContentLayout.addView(textView);
+                            }
+                        }
+
+                        if (yahooTimeErrorLayout != null) {
+                            channelContentLayout.addView(yahooTimeErrorLayout);
+
+                            for (int i = 1; i < yahooTimeErrorLayout.getChildCount(); i++) {
+                                textView = new TextView(MainActivity.this);
+                                textView.setTextSize(14);
+                                textView.setPadding(10, 10, 10, 10);
+                                mChannelTitleLayout.addView(textView);
+                            }
+                            yahooTimeErrorLayout = null;
                         }
                     }
                 }

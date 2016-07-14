@@ -19,7 +19,7 @@ public class Program {
     private Date mStartDate;
     private Date mEndDate;
 
-    private boolean mHasTimeProblem;
+    private boolean mHasYahooTimeProblem;
 
     public Program(String title, String time, Calendar calendar) {
         this.mTitle = title;
@@ -79,8 +79,12 @@ public class Program {
         return mEndDate;
     }
 
-    public void setHasTimeProblem(boolean problem) {
-        mHasTimeProblem = problem;
+    public void setHasYahooTimeProblem(boolean problem) {
+        mHasYahooTimeProblem = problem;
+    }
+
+    public boolean hasYahooTimeProblem() {
+        return mHasYahooTimeProblem;
     }
 
     public int getRuntime() {
