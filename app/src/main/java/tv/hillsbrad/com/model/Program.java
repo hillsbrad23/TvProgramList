@@ -42,7 +42,7 @@ public class Program {
                 int startHour = start.getHours();
                 calendar.setTime(start);
                 calendar.set(year, month, day);
-                if ((startHour - YahooTvConstant.YAHOO_SEARCH_TIME) > hour) {
+                if ((startHour - YahooTvConstant.YAHOO_SEARCH_HOUR) > hour) {
                     calendar.add(Calendar.DATE, -1);
                 }
                 if (startHour < hour &&

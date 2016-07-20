@@ -137,7 +137,7 @@ public class YahooTvConstant {
     // https://tw.movies.yahoo.com/service/rest/?method=ymv.tv.getList&date=2016-06-08&h=16&gid=1
     public static String URL = "https://tw.movies.yahoo.com/service/rest/?method=ymv.tv.getList";
 
-    public final static int YAHOO_SEARCH_TIME = 2; //hour
+    public final static int YAHOO_SEARCH_HOUR = 2; //hour
 
     public final static int PREDICT_RUNTIME_NO_MARE_THAN = 10; //hour
 

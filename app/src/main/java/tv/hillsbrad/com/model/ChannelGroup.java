@@ -43,11 +43,11 @@ public class ChannelGroup {
 
         Calendar endCal = Calendar.getInstance();
         endCal.setTime(startDate);
-        endCal.add(Calendar.HOUR, YahooTvConstant.YAHOO_SEARCH_TIME);
+        endCal.add(Calendar.HOUR, YahooTvConstant.YAHOO_SEARCH_HOUR);
         mSearchingEndDate = endCal.getTime();
     }
 
-    public void attach(ChannelGroup channelGroup) {
+    public void attach(ChannelGroup channelGroup, boolean forward) {
         if (mSearchingStartDate == null ||
                 channelGroup.getSearchingStartDate().getTime() < mSearchingStartDate.getTime()) {
             mSearchingStartDate = channelGroup.getSearchingStartDate();
@@ -60,7 +60,7 @@ public class ChannelGroup {
 
         for (Channel channel: channelGroup.getChannels().values()) {
             if (mChannels.containsKey(channel.getTitle())) {
-                mChannels.get(channel.getTitle()).attach(channel);
+                mChannels.get(channel.getTitle()).attach(channel, forward);
             } else {
                 mChannels.put(channel.getTitle(), channel);
             }

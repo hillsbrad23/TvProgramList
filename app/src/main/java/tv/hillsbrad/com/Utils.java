@@ -21,6 +21,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class Utils {
 
+    public static String TAG = "alexx";
+    public static boolean PROGRAM_DEBUG = false;
+    public static boolean YAHOO_ERROR_DEBUG = true;
+
+
     public static int dip2px(Context context, float dpValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dpValue * scale + 0.5f);

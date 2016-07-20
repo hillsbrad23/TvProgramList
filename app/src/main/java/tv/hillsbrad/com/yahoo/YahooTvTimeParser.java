@@ -16,6 +16,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import tv.hillsbrad.com.App;
+import tv.hillsbrad.com.Utils;
 import tv.hillsbrad.com.model.Channel;
 import tv.hillsbrad.com.model.ChannelGroup;
 import tv.hillsbrad.com.model.Program;
@@ -31,7 +32,7 @@ public class YahooTvTimeParser {
             queryTime.setTime(convert2StartDate(queryTime));
             // https://tw.movies.yahoo.com/service/rest/?method=ymv.tv.getList&date=2016-06-08&h=16&gid=1
             String url = YahooTvConstant.URL.concat("&gid=" + group.getValue() + "&date=" + getDate(queryTime) + "&h=" + queryTime.get(Calendar.HOUR_OF_DAY));
-            Log.d("alexx", "parse url=" + url);
+            Log.d(Utils.TAG, "parse url=" + url);
             Connection.Response response = Jsoup.connect(url).timeout(30000)
                                                             .method(Connection.Method.GET)
                                                             .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36").execute();
@@ -63,7 +64,7 @@ public class YahooTvTimeParser {
 
             return channelGroup;
         } catch (IOException e) {
-            Log.d("alexx", "", e);
+            Log.d(Utils.TAG, "", e);
         }
 
         return null;

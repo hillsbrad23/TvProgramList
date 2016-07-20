@@ -6,12 +6,15 @@ import android.util.Log;
 
 import tv.hillsbrad.com.App;
 import tv.hillsbrad.com.Utils;
+import tv.hillsbrad.com.model.Channel;
+import tv.hillsbrad.com.model.Program;
 import tv.hillsbrad.com.yahoo.YahooTvConstant;
 import tv.hillsbrad.com.model.ChannelGroup;
 import tv.hillsbrad.com.yahoo.YahooTvTimeParser;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 
@@ -57,15 +60,15 @@ public class ModelController {
         }
     }
 
-    private void attach(ChannelGroup channelGroup) {
-        attach(mCurrentGroup, channelGroup);
+    private void attach(ChannelGroup channelGroup, boolean forward) {
+        attach(mCurrentGroup, channelGroup, forward);
     }
 
-    private void attach(YahooTvConstant.Group group, ChannelGroup channelGroup) {
+    private void attach(YahooTvConstant.Group group, ChannelGroup channelGroup, boolean forward) {
         if (mChannelsGroup[group.getValue()-1] == null) {
             mChannelsGroup[group.getValue()-1] = new ChannelGroup();
         }
-        mChannelsGroup[group.getValue()-1].attach(channelGroup);
+        mChannelsGroup[group.getValue()-1].attach(channelGroup, forward);
     }
     public ChannelGroup getModel() {
         if (mChannelsGroup[mCurrentGroup.getValue()-1] == null) {
@@ -84,6 +87,7 @@ public class ModelController {
 
     private Calendar getQueryDate(boolean forward) {
         Calendar calendar = Calendar.getInstance();
+
         if (mChannelsGroup[mCurrentGroup.getValue()-1] != null &&
                 mChannelsGroup[mCurrentGroup.getValue()-1].getSearchingStartDate() != null &&
                 mChannelsGroup[mCurrentGroup.getValue()-1].getSearchingEndDate() != null) {
@@ -91,7 +95,7 @@ public class ModelController {
                 calendar.setTime(mChannelsGroup[mCurrentGroup.getValue() - 1].getSearchingEndDate());
             } else {
                 calendar.setTime(mChannelsGroup[mCurrentGroup.getValue() - 1].getSearchingStartDate());
-                calendar.add(Calendar.HOUR, YahooTvConstant.YAHOO_SEARCH_TIME * -1);
+                calendar.add(Calendar.HOUR, YahooTvConstant.YAHOO_SEARCH_HOUR * -1);
             }
         }
 
@@ -110,8 +114,19 @@ public class ModelController {
                 mWaitToParseCount++;
 
                 ChannelGroup channelGroup = YahooTvTimeParser.parse(mCurrentGroup, getQueryDate(next));
-                attach(channelGroup);
+                attach(channelGroup, next);
                 notifyUpdate(next);
+
+                if (Utils.PROGRAM_DEBUG) {
+                    for (Channel channel : channelGroup.getChannels().values()) {
+                        Log.d(Utils.TAG, channel.getTitle());
+                        for (Program program : channel.getPrograms()) {
+                            Log.d(Utils.TAG, program.getTitle() + " / " + program.getStartDate()
+                                    + " / " + program.getEndDate());
+                        }
+                    }
+                }
+
             }
         }.start();
 
@@ -139,17 +154,17 @@ public class ModelController {
 
                     HashSet<String> notSelected = new HashSet<>();
                     ChannelGroup channelGroup = YahooTvTimeParser.parse(group, calendar);
-                    attach(group, channelGroup);
+                    attach(group, channelGroup, next);
 
                     for (String channelTitle: channelGroup.getChannels().keySet()) {
                         if (!mCustomSelectedChannels.contains(channelTitle)) {
-                            Log.d("alexx", "not selected:" + channelTitle);
+                            Log.d(Utils.TAG, "not selected:" + channelTitle);
 
                             notSelected.add(channelTitle);
                         }
                     }
                     channelGroup.removeChannels(notSelected);
-                    attach(channelGroup);
+                    attach(channelGroup, next);
                     notifyUpdate(next);
                 }
             }.start();

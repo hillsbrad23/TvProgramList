@@ -1,6 +1,10 @@
 package tv.hillsbrad.com.model;
 
+import android.util.Log;
+
 import java.util.ArrayList;
+
+import tv.hillsbrad.com.Utils;
 
 /**
  * Created by alex on 6/8/16.
@@ -23,17 +27,18 @@ public class Channel {
      */
     public void addProgram(Program program) {
         if (mPrograms.size() != 0) {
-            int lastIndex = mPrograms.size() -1;
-            for (int i = lastIndex; i >= 0; i--) {
-                Program compareProgram = mPrograms.get(i);
-
-                if (program.getStartDate().getTime() < compareProgram.getEndDate().getTime()) {
-                    compareProgram.setHasYahooTimeProblem(true);
+            for (int i = mPrograms.size() -1; i >= 0; i--) {
+                if (program.getStartDate().getTime() < mPrograms.get(i).getEndDate().getTime()) {
+                    if (Utils.YAHOO_ERROR_DEBUG) {
+                        Log.d(Utils.TAG, mPrograms.get(i).toString() + " addProgram HasYahooTimeProblem \n "
+                            + program.toString() + " addProgram HasYahooTimeProblem");
+                    }
+                    mPrograms.get(i).setHasYahooTimeProblem(true);
                     program.setHasYahooTimeProblem(true);
                     break;
                 }
 
-                if (!compareProgram.hasYahooTimeProblem()) {
+                if (!mPrograms.get(i).hasYahooTimeProblem()) {
                     break;
                 }
             }
@@ -45,35 +50,48 @@ public class Channel {
         return mPrograms;
     }
 
-    public void attach(Channel channel) {
+    public void attach(Channel channel, boolean forward) {
         if (mPrograms.size() == 0) {
             mPrograms.addAll(channel.getPrograms());
         } else if (channel.getPrograms().size() != 0) {
-            long baseTime;
-            Boolean backward = false;
-            if (mPrograms.get(0).getStartDate().getTime() > channel.getPrograms().get(0).getStartDate().getTime()) {
-                baseTime = mPrograms.get(0).getStartDate().getTime();
-                backward = true;
-            } else {
-                baseTime = mPrograms.get(mPrograms.size()-1).getEndDate().getTime();
-            }
-
             int count = 0;
             for (Program program: channel.getPrograms()) {
-                if (mPrograms.contains(program)) {
-                    continue;
-                }
+                if (forward) {
+                    // judge if program time is correct
+                    for (int i = mPrograms.size() -1; i >= 0; i--) {
+                        if (mPrograms.contains(program)) {break;}
 
-                if (backward) {
-//                    if (program.getEndDate().getTime() > baseTime) {
-//                        program.setHasYahooTimeProblem(true);
-//                    }
-                    mPrograms.add(count++, program);
+                        if (program.getStartDate().getTime() < mPrograms.get(i).getEndDate().getTime()) {
+                            if (Utils.YAHOO_ERROR_DEBUG) {
+                                Log.d(Utils.TAG, program.toString() + " attach fordward HasYahooTimeProblem\n "
+                                    + mPrograms.get(i).toString());
+                            }
+                            mPrograms.get(i).setHasYahooTimeProblem(true);
+                            program.setHasYahooTimeProblem(true);
+                        }
+
+                        if (!mPrograms.get(i).hasYahooTimeProblem()) {break;}
+                    }
+
+                    if (!mPrograms.contains(program)) {mPrograms.add(program);}
                 } else {
-//                    if (program.getStartDate().getTime() < baseTime) {
-//                        program.setHasYahooTimeProblem(true);
-//                    }
-                    mPrograms.add(program);
+                    // judge if program time is correct
+                    for (int i = count; i < mPrograms.size(); i++) {
+                        if (mPrograms.contains(program)) {break;}
+
+                        if (program.getEndDate().getTime() > mPrograms.get(i).getStartDate().getTime()) {
+                            if (Utils.YAHOO_ERROR_DEBUG) {
+                                Log.d(Utils.TAG, program.toString() + " attach backward HasYahooTimeProblem \n "
+                                    + mPrograms.get(i).toString());
+                            }
+                            mPrograms.get(i).setHasYahooTimeProblem(true);
+                            program.setHasYahooTimeProblem(true);
+                        }
+
+                        if (!mPrograms.get(i).hasYahooTimeProblem()) {break;}
+                    }
+
+                    if (!mPrograms.contains(program)) {mPrograms.add(count++, program);}
                 }
             }
         }

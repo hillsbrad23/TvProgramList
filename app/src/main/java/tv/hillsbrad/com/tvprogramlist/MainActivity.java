@@ -209,161 +209,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void search(final boolean next) {
-
-        Log.d("alexx", "search(" + next + ")");
-
-//        if (!mTimeController.isSearched()) {
-//            new Thread() {
-//                public void run() {
-                    mModelController.parseMoreDataFromHttp(next);
-//                    refreshUI();
-//                }
-//            }.start();
-
-
-
-//                    if (channelGroup != null) {
-//                        runOnUiThread(new Runnable() {
-//                            public void run() {
-//
-//                                ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
-//                                        Utils.getSliceBacisWidth(MainActivity.this), ViewGroup.LayoutParams.WRAP_CONTENT);
-//                                int currentHour = mTimeController.getCurrentHourOfDay();
-//
-//                                mTimeController.resetSearchTime(channelGroup.getSearchingStartDate(), channelGroup.getSearchingEndDate());
-//                                Log.d("alexx", "viewStartTime " + mTimeController.getViewStartDate());
-//                                Log.d("alexx", "viewEndTime   " + mTimeController.getViewEndDate());
-//
-//                                TextView textView = new TextView(MainActivity.this);
-//                                textView.setText(Utils.toHourOfDayString(currentHour));
-//                                textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, currentHour));
-//                                textView.setLayoutParams(params);
-//                                if (next) {
-//                                    mTimeSliceLayout.addView(textView);
-//                                } else {
-//                                    mTimeSliceLayout.addView(textView, 0);
-//                                }
-//
-//                                textView = new TextView(MainActivity.this);
-//                                textView.setText(Utils.toHourOfDayString(currentHour + 1));
-//                                textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, currentHour + 1));
-//                                textView.setLayoutParams(params);
-//                                if (next) {
-//                                    mTimeSliceLayout.addView(textView);
-//                                } else {
-//                                    mTimeSliceLayout.addView(textView, 1);
-//                                }
-//
-//                                int channelCount = 0;
-//                                for (Channel channel : channelGroup.getChannels().values()) {
-//                                    int bg = (channelCount++ % 2 == 0) ? R.color.programBg1 : R.color.programBg2;
-//                                    bg = getResources().getColor(bg, null);
-//
-//                                    LinearLayout sliceLayout = null;
-//                                    // channel title
-//                                    if (mViewController.containsChannel(channel.getTitle())) {
-//                                        sliceLayout = mViewController.getLayout(channel.getTitle());
-//                                        Log.d("alexx", "existed: " + channel.getTitle());
-//                                    } else {
-//                                        textView = new TextView(MainActivity.this);
-//                                        textView.setText(channel.getTitle());
-//                                        textView.setBackgroundColor(bg);
-//                                        mChannelTitleLayout.addView(textView);
-//
-//                                        sliceLayout = new LinearLayout(MainActivity.this);
-//                                        sliceLayout.setOrientation(LinearLayout.HORIZONTAL);
-//                                        mProgramDurationLayout.addView(sliceLayout);
-//
-//                                        Log.d("alexx", "new: " + channel.getTitle());
-//                                    }
-//
-//                                    // channel content
-//                                    int count = 0;
-//                                    int totalCount = channel.getPrograms().size();
-//                                    for (Program program : channel.getPrograms()) {
-//
-//                                        if (count == 0 && next && sliceLayout.getChildCount() > 0 &&
-//                                            program.getStartDate().getTime() < channelGroup.getSearchingStartDate().getTime()) {
-//                                            // if need to merge privious item
-//                                            textView = (TextView) sliceLayout.getChildAt(sliceLayout.getChildCount()-1);
-//                                            params = textView.getLayoutParams();
-//                                            params.width = Utils.getRelatedProgramSliceWidth(program,
-//                                                    mTimeController.getViewStartDate(),
-//                                                    mTimeController.getViewEndDate());
-//                                            textView.requestLayout();
-//                                            Log.d("alexx", "    next exist");
-//                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
-//                                        } else if (count == (totalCount -1) && !next && sliceLayout.getChildCount() > count &&
-//                                                program.getEndDate().getTime() >
-//                                                        (channelGroup.getSearchingStartDate().getTime() + YahooTvConstant.YAHOO_SEARCH_TIME * Utils.MILLISECOND_IN_HOUR)) {
-//                                            // if need to merge post item
-//                                            textView = (TextView) sliceLayout.getChildAt(count);
-//                                            params = textView.getLayoutParams();
-//                                            params.width = Utils.getRelatedProgramSliceWidth(program,
-//                                                    mTimeController.getViewStartDate(),
-//                                                    mTimeController.getViewEndDate());
-//                                            textView.requestLayout();
-//
-//                                            Log.d("alexx", "    previous exist");
-//                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
-//                                        } else {
-//                                            if (count == 0 && next && sliceLayout.getChildCount() > 0 &&
-//                                                    program.getStartDate().getTime() > channelGroup.getSearchingStartDate().getTime()) {
-//
-//                                                // there is bug, adjust view must use correct program object
-//                                                textView = (TextView) sliceLayout.getChildAt(sliceLayout.getChildCount()-1);
-//                                                Program textViewProgram = (Program) textView.getTag();
-//                                                params = textView.getLayoutParams();
-//                                                params.width = Utils.getRelatedProgramSliceWidth(textViewProgram,
-//                                                        mTimeController.getViewStartDate(),
-//                                                        mTimeController.getViewEndDate());
-//                                                textView.requestLayout();
-//                                                //https://tw.movies.yahoo.com/service/rest/?method=ymv.tv.getList&gid=5&date=2016-06-24&h=18
-//                                                //existed: 教育文化頻道
-//                                                //120 / 華視新住民新聞-越南語(普) / 10 / Fri Jun 24 19:00:00 GMT+08:00 2016 / Fri Jun 24 19:10:00 GMT+08:00 2016
-//                                                //300 / 動感科技-機器人(普) / 25 / Fri Jun 24 19:10:00 GMT+08:00 2016 / Fri Jun 24 19:35:00 GMT+08:00 2016
-//                                                //300 / 動感科技-機器人(普) / 25 / Fri Jun 24 19:35:00 GMT+08:00 2016 / Fri Jun 24 20:00:00 GMT+08:00 2016
-//                                            }
-//
-//                                            params = new ViewGroup.LayoutParams(
-//                                                    Utils.getRelatedProgramSliceWidth(program,
-//                                                            mTimeController.getViewStartDate(),
-//                                                            mTimeController.getViewEndDate()),
-//                                                    ViewGroup.LayoutParams.WRAP_CONTENT);
-//                                            textView = new TextView(MainActivity.this);
-//                                            textView.setText(program.getTitle() + "/" + program.getTime());
-//                                            textView.setBackground(getResources().getDrawable(R.drawable.program_textview, null));
-//                                            textView.setLayoutParams(params);
-//                                            textView.setHorizontallyScrolling(true);
-//                                            textView.setSingleLine(true);
-//                                            textView.setTag(program);
-//
-//                                            if (next) {
-//                                                sliceLayout.addView(textView);
-//                                            } else {
-//                                                sliceLayout.addView(textView, count);
-//                                            }
-//
-//                                            Log.d("alexx", "    " + params.width + " / " + program.toString());
-//                                        }
-//                                        count++;
-//                                    }
-//                                    mViewController.add(channel.getTitle(), sliceLayout);
-//                                }
-//                                mIsProcessing = false;
-//                                mPreviousButton.setEnabled(true);
-//                                mNextButton.setEnabled(true);
-//                            }
-//                        });
-//                    }
-//                }
-//            }.start();
-//        } else {
-//            Log.d("alexx", "already search / " + mTimeController.getCalendar().getTime());
-//            mIsProcessing = false;
-//            mPreviousButton.setEnabled(true);
-//            mNextButton.setEnabled(true);
-//        }
+        mModelController.parseMoreDataFromHttp(next);
     }
 
     public void searchMore(boolean next) {
@@ -376,14 +222,12 @@ public class MainActivity extends AppCompatActivity {
 
                 search(next);
             } else {
-                Log.d("alexx", "search is processing");
+                Log.d(Utils.TAG, "search is processing");
             }
         }
     }
 
     public void refreshUI(final boolean next) {
-        Log.d("alexx", "refreshUI " + next);
-
         runOnUiThread(new Runnable() {
             public void run() {
                 //clear UI
@@ -404,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
                             channelGroup.getSearchingStartDate().getTime();
                     long hours = TimeUnit.MILLISECONDS.toHours(duration);
 
-                    ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                             Utils.getSliceBacisWidth(MainActivity.this), ViewGroup.LayoutParams.WRAP_CONTENT);
                     for (int i = 0; i < hours; i++) {
                         textView = new TextView(MainActivity.this);
@@ -417,13 +261,17 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     int channelCount = 0;
+                    int channelHeight = 0;
                     for (Channel channel : channelGroup.getChannels().values()) {
+                        channelCount++;
+                        channelHeight = 1;
+
                         /** channel title **/
                         textView = new TextView(MainActivity.this);
                         textView.setText(channel.getTitle());
                         textView.setTextSize(14);
                         textView.setPadding(10, 10, 10, 10);
-                        if (channelCount++ % 2 == 0) {
+                        if (channelCount % 2 == 1) {
                             textView.setBackgroundColor(getResources().getColor(R.color.colorChannelTitleBg, null));
                         }
                         mChannelTitleLayout.addView(textView);
@@ -433,13 +281,11 @@ public class MainActivity extends AppCompatActivity {
                         channelContentLayout.setOrientation(LinearLayout.HORIZONTAL);
                         mProgramDurationLayout.addView(channelContentLayout);
 
-                        // for time of yahoo program model error handle
-                        ArrayList<LinearLayout> reusedErrorLayout = new ArrayList<LinearLayout>();
-                        ArrayList<Long> reusedLayoutStartTime = new ArrayList<Long>();
-                        ArrayList<Long> reusedLayoutEndTime = new ArrayList<Long>();
-
-                        LinearLayout yahooTimeErrorLayout = null;
-                        long errorStartTime = 0, errorEndTime = 0;
+                        // handle time error of yahoo program model
+                        LinearLayout yahooErrorParentLayout = null;
+                        ArrayList<LinearLayout> reusedYahooErrorLayout = new ArrayList<>();
+                        ArrayList<Long> reusedErrorLayoutEndTime = new ArrayList<>();
+                        Long currentNormalBlockEndTime = 0L;
 
                         boolean firstProgram = true;
                         for (Program program : channel.getPrograms()) {
@@ -458,83 +304,95 @@ public class MainActivity extends AppCompatActivity {
                             textView.setPadding(10, 10, 10, 10);
 
                             // fix Yahoo data is not well-formed
-                            // query h=16
+                            // query h=16, no data during 04:00~04:30
                             // 04:30PM~05:00PM xxx
                             // 05:00PM~07:00PM yyy
                             if (firstProgram) {
                                 firstProgram = false;
                                 if (program.getStartDate().getTime() >
                                         channelGroup.getSearchingStartDate().getTime()) {
-
-                                    params = new ViewGroup.LayoutParams(
-                                            Utils.getEmptySliceWidth(channelGroup.getSearchingStartDate(),
-                                                    program.getStartDate()),
-                                            ViewGroup.LayoutParams.WRAP_CONTENT);
-
-                                    TextView emptyTextView = new TextView(MainActivity.this);
-                                    emptyTextView.setBackground(getResources().getDrawable(R.drawable.program_textview, null));
-                                    emptyTextView.setLayoutParams(params);
-                                    emptyTextView.setPadding(10, 10, 10, 10);
-                                    channelContentLayout.addView(emptyTextView);
+                                    params = (LinearLayout.LayoutParams) textView.getLayoutParams();
+                                    params.setMarginStart(Utils.getEmptySliceWidth(
+                                            channelGroup.getSearchingStartDate(), program.getStartDate()));
                                 }
                             }
 
                             if (program.hasYahooTimeProblem()) {
                                 textView.setTextColor(Color.RED);
 
-                                if (yahooTimeErrorLayout == null) {
-                                    yahooTimeErrorLayout = new LinearLayout(MainActivity.this);
-                                    yahooTimeErrorLayout.setOrientation(LinearLayout.VERTICAL);
-                                    errorStartTime = 0;
-                                    errorEndTime = 0;
+                                if (yahooErrorParentLayout == null) {
+                                    yahooErrorParentLayout = new LinearLayout(MainActivity.this);
+                                    yahooErrorParentLayout.setOrientation(LinearLayout.VERTICAL);
+                                    yahooErrorParentLayout.setBackground(getResources().getDrawable(R.drawable.error_program_textview_layout, null));
+                                    reusedYahooErrorLayout.clear();
+                                    reusedErrorLayoutEndTime.clear();
+                                    channelContentLayout.addView(yahooErrorParentLayout);
                                 }
 
-                                if (errorStartTime == 0 || program.getStartDate().getTime() < errorStartTime) {
-                                    if (program.getStartDate().getTime() < channelGroup.getSearchingStartDate().getTime()) {
-                                        errorStartTime = channelGroup.getSearchingStartDate().getTime();
-                                    } else {
-                                        errorStartTime = program.getStartDate().getTime();
+                                LinearLayout errorInRowLayout = null;
+                                int index;
+                                // search suitable layout to add view
+                                for (index = 0; index < reusedYahooErrorLayout.size(); index++) {
+                                    if (reusedErrorLayoutEndTime.get(index) <= program.getStartDate().getTime()) {
+                                        errorInRowLayout = reusedYahooErrorLayout.get(index);
+                                        break;
                                     }
                                 }
-                                if (errorEndTime == 0 || program.getEndDate().getTime() > errorEndTime) {
-                                    errorEndTime = program.getEndDate().getTime();
+
+                                if (errorInRowLayout == null) {
+                                    errorInRowLayout = new LinearLayout(MainActivity.this);
+                                    errorInRowLayout.setOrientation(LinearLayout.HORIZONTAL);
+                                    yahooErrorParentLayout.addView(errorInRowLayout);
+                                    reusedYahooErrorLayout.add(errorInRowLayout);
+
+                                    // add channel title height if there are multiple error linearLayout
+                                    if (channelHeight < reusedYahooErrorLayout.size()) {
+                                        for (int i = channelHeight; i < reusedYahooErrorLayout.size(); i++) {
+                                            TextView emptyChannelTitleTextView = new TextView(MainActivity.this);
+                                            emptyChannelTitleTextView.setPadding(10, 10, 10, 10);
+                                            if (channelCount % 2 == 1) {
+                                                emptyChannelTitleTextView.setBackgroundColor(getResources().getColor(R.color.colorChannelTitleBg, null));
+                                            }
+                                            mChannelTitleLayout.addView(emptyChannelTitleTextView);
+                                        }
+
+                                        channelHeight = reusedYahooErrorLayout.size();
+                                    }
+
+                                    // adjust margin if program list is not continuous for first initial
+                                    if (program.getStartDate().getTime() > currentNormalBlockEndTime
+                                            && program.getStartDate().getTime() > channelGroup.getSearchingStartDate().getTime()) {
+                                        if (currentNormalBlockEndTime == 0L) {
+                                            currentNormalBlockEndTime = channelGroup.getSearchingStartDate().getTime();
+                                        }
+
+                                        params = (LinearLayout.LayoutParams) textView.getLayoutParams();
+                                        params.setMarginStart(Utils.getEmptySliceWidth(
+                                                new Date(currentNormalBlockEndTime), program.getStartDate()));
+                                    }
                                 }
 
-                                if (program.getStartDate().getTime() > errorStartTime) {
-                                    ((LinearLayout.LayoutParams) textView.getLayoutParams())
-                                            .setMarginStart(Utils.getEmptySliceWidth(new Date(errorStartTime),
-                                                    program.getStartDate()));
-                                    Log.d("alexx", textView.getText() + " setMargin " + Utils.getEmptySliceWidth(new Date(errorStartTime),
-                                            program.getStartDate()));
+                                // adjust margin if program list is not continuous
+                                if (index < reusedErrorLayoutEndTime.size()
+                                    && reusedErrorLayoutEndTime.get(index) < program.getStartDate().getTime()) {
+
+                                    params = (LinearLayout.LayoutParams) textView.getLayoutParams();
+                                    params.setMarginStart(Utils.getEmptySliceWidth(
+                                            new Date(reusedErrorLayoutEndTime.get(index)), program.getStartDate()));
                                 }
 
-                                yahooTimeErrorLayout.addView(textView);
+                                errorInRowLayout.addView(textView);
+                                if (index < reusedErrorLayoutEndTime.size()) {
+                                    reusedErrorLayoutEndTime.set(index, program.getEndDate().getTime());
+                                } else {
+                                    reusedErrorLayoutEndTime.add(program.getEndDate().getTime());
+                                }
                             } else {
-                                if (yahooTimeErrorLayout != null) {
-                                    channelContentLayout.addView(yahooTimeErrorLayout);
-                                    for (int i = 1; i < yahooTimeErrorLayout.getChildCount(); i++) {
-                                        TextView emptyView = new TextView(MainActivity.this);
-                                        emptyView.setTextSize(14);
-                                        emptyView.setPadding(10, 10, 10, 10);
-                                        mChannelTitleLayout.addView(emptyView);
-                                    }
-
-                                    yahooTimeErrorLayout = null;
-                                }
+                                // normal program time, just add it
                                 channelContentLayout.addView(textView);
+                                currentNormalBlockEndTime = program.getEndDate().getTime();
+                                yahooErrorParentLayout = null;
                             }
-                        }
-
-                        if (yahooTimeErrorLayout != null) {
-                            channelContentLayout.addView(yahooTimeErrorLayout);
-
-                            for (int i = 1; i < yahooTimeErrorLayout.getChildCount(); i++) {
-                                textView = new TextView(MainActivity.this);
-                                textView.setTextSize(14);
-                                textView.setPadding(10, 10, 10, 10);
-                                mChannelTitleLayout.addView(textView);
-                            }
-                            yahooTimeErrorLayout = null;
                         }
                     }
                 }
