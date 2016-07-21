@@ -63,7 +63,7 @@ public class Channel {
 
                         if (program.getStartDate().getTime() < mPrograms.get(i).getEndDate().getTime()) {
                             if (Utils.YAHOO_ERROR_DEBUG) {
-                                Log.d(Utils.TAG, program.toString() + " attach fordward HasYahooTimeProblem\n "
+                                Log.d(Utils.TAG, program.toString() + " attach forward HasYahooTimeProblem\n "
                                     + mPrograms.get(i).toString());
                             }
                             mPrograms.get(i).setHasYahooTimeProblem(true);

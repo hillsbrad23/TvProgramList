@@ -53,7 +53,7 @@ public class CustomChannelSettings extends AppCompatDialogFragment
         super.onCreate(savedInstance);
         layoutInflater = (LayoutInflater) CustomChannelSettings.this.getContext()
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mModelController = ModelController.getInstance();
+        mModelController = ModelController.getInstance(getContext());
         mCurrentSelectedChannel = new HashSet<>();
         mCurrentSelectedChannel.addAll(mModelController.getCustomSelectedChannels());
         mSelectedCountByChannelType = new int[YahooTvConstant.sChannelMapping.length];

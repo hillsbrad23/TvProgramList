@@ -6,6 +6,7 @@ import android.util.Log;
 
 import tv.hillsbrad.com.model.Program;
 import tv.hillsbrad.com.tvprogramlist.R;
+import tv.hillsbrad.com.yahoo.YahooTvConstant;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -51,7 +52,7 @@ public class Utils {
     }
 
     public static int getProgramSliceWidth(long runtime) {  //width per hour
-        return (int) (runtime * sSliceBasicWidth / 60.0f);
+        return (int) (runtime * getSliceBacisWidth(App.getContext()) / 60.0f);
     }
 
     public static int getEmptySliceWidth(Date startDate, Date endDate) {
@@ -88,9 +89,15 @@ public class Utils {
 
     private static final String SHARED_PREFERENCES_NAME = "program_list_settings";
     private static final String KEY_CUSTOM_CHANNELS = "custom_channels";
+    private static final String KEY_CURRENT_GROUP = "current_group";
 
     private static SharedPreferences getSharedPreferences(Context context) {
         return context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+    }
+
+    public static Set<String> loadCustomSelectedChannels(Context context) {
+        SharedPreferences spref = getSharedPreferences(context);
+        return spref.getStringSet(KEY_CUSTOM_CHANNELS, Collections.<String>emptySet());
     }
 
     public static void saveCustomSelectedChannels(Context context, Set<String> selected) {
@@ -98,8 +105,14 @@ public class Utils {
         editor.putStringSet(KEY_CUSTOM_CHANNELS, selected).apply();
     }
 
-    public static Set<String> loadCustomSelectedChannels(Context context) {
+    public static YahooTvConstant.Group loadCurrentGroup(Context context) {
         SharedPreferences spref = getSharedPreferences(context);
-        return spref.getStringSet(KEY_CUSTOM_CHANNELS, Collections.<String>emptySet());
+        int defaultGroup = spref.getInt(KEY_CURRENT_GROUP, 1);
+        return  YahooTvConstant.Group.convertToGroup(defaultGroup);
+    }
+
+    public static void saveCurrentGroup(Context context, YahooTvConstant.Group group) {
+        SharedPreferences.Editor editor = getSharedPreferences(context).edit();
+        editor.putInt(KEY_CURRENT_GROUP, group.getValue()).apply();
     }
 }

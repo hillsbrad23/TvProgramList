@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -15,9 +16,11 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -31,6 +34,7 @@ import tv.hillsbrad.com.model.Channel;
 import tv.hillsbrad.com.model.ChannelGroup;
 import tv.hillsbrad.com.model.Program;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -42,16 +46,17 @@ public class MainActivity extends AppCompatActivity {
     public static String SEARCH_NEXT = "search_next";
 
     private LinearLayout mChannelTitleLayout;
-    private LinearLayout mProgramDurationLayout;
+    private LinearLayout mChannelGroupContentLayout;
     private LinearLayout mTimeSliceLayout;
     private HorizontalScrollView mProgramScrollView;
+    private FrameLayout mTimeIndicatorFrameLayout;
 
     private Spinner mTypeSpinner;
-
     private ImageButton mPreviousButton;
     private ImageButton mNextButton;
-    private boolean mIsProcessing;
+    private TextView mTimeIndicatorTextView;
 
+    private boolean mIsProcessing;
 
     // for test
     private Button mClearButton;
@@ -105,10 +110,10 @@ public class MainActivity extends AppCompatActivity {
 
         mIntentFilter = new IntentFilter(REFRESH_UI_ACTION);
 
-        mModelController = ModelController.getInstance();
+        mModelController = ModelController.getInstance(this);
 
         mChannelTitleLayout = (LinearLayout) findViewById(R.id.channel_title_layout);
-        mProgramDurationLayout = (LinearLayout) findViewById(R.id.program_duration_layout);
+        mChannelGroupContentLayout = (LinearLayout) findViewById(R.id.channel_group_content_layout);
         mTimeSliceLayout = (LinearLayout) findViewById(R.id.time_slice_layout);
         mProgramScrollView = (HorizontalScrollView) findViewById(R.id.program_scroll_view);
         mProgramScrollView.setOnTouchListener(new View.OnTouchListener() {
@@ -134,6 +139,8 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
+        mTimeIndicatorFrameLayout = (FrameLayout) findViewById(R.id.time_indicator_framelayout);
+        mTimeIndicatorTextView = (TextView) findViewById(R.id.time_indicator_textview);
 
         mTypeSpinner = (Spinner) findViewById(R.id.type_spinner);
         initSpinner();
@@ -178,7 +185,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void initSpinner() {
         ArrayList<String> channels2 = new ArrayList<>();
-
         String[] channels = new String[YahooTvConstant.CHANNEL_TYPE.length];
         for (int i = 0; i < YahooTvConstant.CHANNEL_TYPE.length; i++) {
             channels[i] = getString(YahooTvConstant.CHANNEL_TYPE[i]);
@@ -206,6 +212,8 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        mTypeSpinner.setSelection(mModelController.getCurrentGroup().getValue() - 1, true);
     }
 
     public void search(final boolean next) {
@@ -235,33 +243,39 @@ public class MainActivity extends AppCompatActivity {
                 TextView textView = new TextView(MainActivity.this);
                 textView.setPadding(10, 10, 10, 10);
                 mChannelTitleLayout.addView(textView);
-                mProgramDurationLayout.removeAllViews();
+                mChannelGroupContentLayout.removeAllViews();
                 mTimeSliceLayout.removeAllViews();
 
                 ChannelGroup channelGroup = mModelController.getModel();
 
                 if (channelGroup.isReadyToPresent()) {
                     Calendar calendar = Calendar.getInstance();
+
+                    /** time mark **/
                     calendar.setTime(channelGroup.getSearchingStartDate());
                     int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
                     long duration = channelGroup.getSearchingEndDate().getTime() -
                             channelGroup.getSearchingStartDate().getTime();
                     long hours = TimeUnit.MILLISECONDS.toHours(duration);
-
+                    SimpleDateFormat sdf = new SimpleDateFormat("MM/dd HH:mm");
                     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                             Utils.getSliceBacisWidth(MainActivity.this), ViewGroup.LayoutParams.WRAP_CONTENT);
                     for (int i = 0; i < hours; i++) {
                         textView = new TextView(MainActivity.this);
-                        textView.setText(Utils.toHourOfDayString((currentHour + i) % 24));
+                        textView.setText(sdf.format(calendar.getTime()));
+                        textView.setTypeface(null, Typeface.BOLD);
                         textView.setBackgroundColor(Utils.getHourOfDayColor(MainActivity.this, (currentHour + i) % 24));
                         textView.setLayoutParams(params);
                         textView.setTextSize(14);
                         textView.setPadding(10, 10, 10, 10);
                         mTimeSliceLayout.addView(textView);
+
+                        calendar.add(Calendar.HOUR_OF_DAY, 1);
                     }
 
                     int channelCount = 0;
                     int channelHeight = 0;
+                    Date currentTime = Calendar.getInstance().getTime();
                     for (Channel channel : channelGroup.getChannels().values()) {
                         channelCount++;
                         channelHeight = 1;
@@ -279,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
                         /** channel content **/
                         LinearLayout channelContentLayout = new LinearLayout(MainActivity.this);
                         channelContentLayout.setOrientation(LinearLayout.HORIZONTAL);
-                        mProgramDurationLayout.addView(channelContentLayout);
+                        mChannelGroupContentLayout.addView(channelContentLayout);
 
                         // handle time error of yahoo program model
                         LinearLayout yahooErrorParentLayout = null;
@@ -302,6 +316,10 @@ public class MainActivity extends AppCompatActivity {
                             textView.setSingleLine(true);
                             textView.setTextSize(14);
                             textView.setPadding(10, 10, 10, 10);
+                            if (currentTime.getTime() >= program.getStartDate().getTime() &&
+                                    currentTime.getTime() < program.getEndDate().getTime()) {
+                                textView.setTextColor(Color.BLUE);
+                            }
 
                             // fix Yahoo data is not well-formed
                             // query h=16, no data during 04:00~04:30
@@ -314,6 +332,7 @@ public class MainActivity extends AppCompatActivity {
                                     params = (LinearLayout.LayoutParams) textView.getLayoutParams();
                                     params.setMarginStart(Utils.getEmptySliceWidth(
                                             channelGroup.getSearchingStartDate(), program.getStartDate()));
+                                    textView.setLayoutParams(params);
                                 }
                             }
 
@@ -369,16 +388,18 @@ public class MainActivity extends AppCompatActivity {
                                         params = (LinearLayout.LayoutParams) textView.getLayoutParams();
                                         params.setMarginStart(Utils.getEmptySliceWidth(
                                                 new Date(currentNormalBlockEndTime), program.getStartDate()));
+                                        textView.setLayoutParams(params);
                                     }
                                 }
 
                                 // adjust margin if program list is not continuous
-                                if (index < reusedErrorLayoutEndTime.size()
-                                    && reusedErrorLayoutEndTime.get(index) < program.getStartDate().getTime()) {
+                                if (index < reusedErrorLayoutEndTime.size() &&
+                                        reusedErrorLayoutEndTime.get(index) < program.getStartDate().getTime()) {
 
                                     params = (LinearLayout.LayoutParams) textView.getLayoutParams();
                                     params.setMarginStart(Utils.getEmptySliceWidth(
                                             new Date(reusedErrorLayoutEndTime.get(index)), program.getStartDate()));
+                                    textView.setLayoutParams(params);
                                 }
 
                                 errorInRowLayout.addView(textView);
@@ -395,6 +416,45 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
                     }
+
+                    /** time indicator (vertical divider) **/
+                    // FIXME the added view can be drawn with frame layout have at least 3 child
+                    if (mTimeIndicatorFrameLayout.getChildCount() > 2) {
+                        mTimeIndicatorFrameLayout.removeViewAt(0);
+                    }
+                    calendar = Calendar.getInstance();
+                    int marginStart = Utils.getEmptySliceWidth(
+                            channelGroup.getSearchingStartDate(), calendar.getTime());
+                    View view = new View(MainActivity.this);
+                    FrameLayout.LayoutParams param = new FrameLayout.LayoutParams(
+                            5, ViewGroup.LayoutParams.MATCH_PARENT);
+                    param.setMarginStart(marginStart);
+                    view.setLayoutParams(param);
+                    view.setBackgroundColor(Color.rgb(0x66, 0x66, 0x66));
+                    mTimeIndicatorFrameLayout.addView(view, 0);
+
+                    /** time indicator (current time mark) **/
+                    LinearLayout.LayoutParams params2 = (LinearLayout.LayoutParams) mTimeIndicatorTextView.getLayoutParams();
+                    params2.setMarginStart(0);
+                    mTimeIndicatorTextView.setLayoutParams(params2);
+                    mTimeIndicatorTextView.setTag(marginStart);
+                    ViewTreeObserver vto2 = mTimeIndicatorTextView.getViewTreeObserver();
+                    vto2.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            mTimeIndicatorTextView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            int marginStart = (int) mTimeIndicatorTextView.getTag() - (mTimeIndicatorTextView.getMeasuredWidth() / 2);
+                            if (marginStart < 0) {
+                                marginStart = 0;
+                            } else if ((marginStart + mTimeIndicatorTextView.getMeasuredWidth())
+                                    > mTimeSliceLayout.getMeasuredWidth()) {
+                                marginStart = mTimeSliceLayout.getMeasuredWidth() - mTimeIndicatorTextView.getMeasuredWidth();
+                            }
+                            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mTimeIndicatorTextView.getLayoutParams();
+                            params.setMarginStart(marginStart);
+                            mTimeIndicatorTextView.setLayoutParams(params);
+                        }
+                    });
                 }
 
                 if (!next && mBasicMeasureViewWidth != -1) {

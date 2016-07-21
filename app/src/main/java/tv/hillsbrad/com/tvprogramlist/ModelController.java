@@ -1,5 +1,6 @@
 package tv.hillsbrad.com.tvprogramlist;
 
+import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -35,15 +36,16 @@ public class ModelController {
 
     private int mWaitToParseCount;
 
-    public static ModelController getInstance() {
+    public static ModelController getInstance(Context context) {
         if (sInstance == null) {
-            sInstance = new ModelController();
+            sInstance = new ModelController(context);
         }
         return sInstance;
     }
 
-    private ModelController() {
-        mCurrentGroup = YahooTvConstant.Group.ONE;
+    private ModelController(Context context) {
+        mCurrentGroup = Utils.loadCurrentGroup(context);
+
         mChannelsGroup = new ChannelGroup[YahooTvConstant.Group.values().length];
         mCustomSelectedChannels = new LinkedHashSet<>();
         mCustomSelectedTypes = new ArrayList<>();
@@ -82,6 +84,7 @@ public class ModelController {
     }
 
     public void setCurrentGroup(YahooTvConstant.Group group) {
+        Utils.saveCurrentGroup(App.getContext(), group);
         mCurrentGroup = group;
     }
 
@@ -129,10 +132,6 @@ public class ModelController {
 
             }
         }.start();
-
-
-//        ChannelGroup channelGroup = YahooTvTimeParser.parse(mCurrentGroup, getQueryDate(next));
-//        attach(channelGroup);
     }
 
     private void parseMoreCustomDataFromHttp(final boolean next) {
