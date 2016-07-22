@@ -10,6 +10,7 @@ import tv.hillsbrad.com.yahoo.YahooTvConstant;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -24,7 +25,7 @@ public class Utils {
 
     public static String TAG = "alexx";
     public static boolean PROGRAM_DEBUG = false;
-    public static boolean YAHOO_ERROR_DEBUG = true;
+    public static boolean YAHOO_ERROR_DEBUG = false;
 
 
     public static int dip2px(Context context, float dpValue) {
@@ -85,6 +86,27 @@ public class Utils {
         } catch (ParseException e) {}
 
         return date;
+    }
+
+    public static String convertDayOfWeek(int dayOfWeek) {
+        switch (dayOfWeek) {
+            case Calendar.SUNDAY:
+                return "(日)";
+            case Calendar.MONDAY:
+                return "(一)";
+            case Calendar.TUESDAY:
+                return "(二)";
+            case Calendar.WEDNESDAY:
+                return "(三)";
+            case Calendar.THURSDAY:
+                return "(四)";
+            case Calendar.FRIDAY:
+                return "(五)";
+            case Calendar.SATURDAY:
+                return "(六)";
+            default:
+                return "()";
+        }
     }
 
     private static final String SHARED_PREFERENCES_NAME = "program_list_settings";

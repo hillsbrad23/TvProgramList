@@ -11,46 +11,34 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="tv.hillsbrad.com.tvprogramlist.MainActivity"
     tools:showIn="@layout/activity_main"
-    android:orientation="vertical"
-    >
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/clear_model_data_button"
+        android:text="Clear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/program_textview"
+        android:layout_marginBottom="@dimen/spinner_bottom_margin"
+        android:layout_alignParentTop="true"/>
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="@dimen/button_margin">
-
-
-        <Button
-            android:id="@+id/clear_model_data_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"/>
-
-
-        <ImageButton
-            android:id="@+id/previous_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/round_menu_previous_button_normal"
-            android:background="#00000000"
-            android:gravity="center"
-            android:layout_alignParentLeft="true"/>
+        android:layout_marginBottom="@dimen/spinner_bottom_margin">
         <Spinner
-            android:id="@+id/type_spinner"
+            android:id="@+id/channel_group_type_spinner"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
+            android:layout_alignParentLeft="true"
             android:gravity="center"
-            android:background="@drawable/spinner_background">
-        </Spinner>
-        <ImageButton
-            android:id="@+id/next_button"
+            android:background="@drawable/spinner_background"/>
+        <Spinner
+            android:id="@+id/day_spinner"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/round_menu_next_button_normal"
-            android:background="#00000000"
-            android:gravity="center"
-            android:layout_alignParentRight="true"/>
+            android:layout_alignParentRight="true"
+            android:background="@drawable/spinner_background"/>
     </RelativeLayout>
     <ScrollView
         android:layout_width="match_parent"

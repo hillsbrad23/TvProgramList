@@ -30,6 +30,11 @@ public class ModelController {
 
     private ChannelGroup[] mChannelsGroup;
 
+    private Date mYahooLimitationStartDate;
+    private Date mYahooLimitationEndDate;
+
+    private int mSpecificMonth = -1, mSpecificDay = -1;
+
     /** User select custom channel **/
     private HashSet<String> mCustomSelectedChannels;
     private ArrayList<YahooTvConstant.Group> mCustomSelectedTypes;
@@ -88,8 +93,24 @@ public class ModelController {
         mCurrentGroup = group;
     }
 
+    public void setYahooLimitationDate(Date startDate, Date endDate) {
+        mYahooLimitationStartDate = startDate;
+        mYahooLimitationEndDate = endDate;
+    }
+
+    public void setSearchDate(int month, int day) {
+        mSpecificMonth = month;
+        mSpecificDay = day;
+        mChannelsGroup = new ChannelGroup[YahooTvConstant.Group.values().length];
+    }
+
     private Calendar getQueryDate(boolean forward) {
         Calendar calendar = Calendar.getInstance();
+
+        if (mSpecificMonth != -1 && mSpecificDay != -1) {
+            calendar.set(Calendar.MONTH, mSpecificMonth - 1);
+            calendar.set(Calendar.DAY_OF_MONTH, mSpecificDay);
+        }
 
         if (mChannelsGroup[mCurrentGroup.getValue()-1] != null &&
                 mChannelsGroup[mCurrentGroup.getValue()-1].getSearchingStartDate() != null &&
@@ -105,10 +126,15 @@ public class ModelController {
         return calendar;
     }
 
-    public void parseMoreDataFromHttp(final boolean next) {
+    public boolean parseMoreDataFromHttp(final boolean forward) {
         if (mCurrentGroup == YahooTvConstant.Group.THIRTEEN) {  // custom type
-            parseMoreCustomDataFromHttp(next);
-            return;
+            return parseMoreCustomDataFromHttp(forward);
+        }
+
+        final Calendar calendar = getQueryDate(forward);
+        if (calendar.getTime().getTime() < mYahooLimitationStartDate.getTime() ||
+                calendar.getTime().getTime() >= mYahooLimitationEndDate.getTime()) {
+            return false;
         }
 
         mWaitToParseCount = 0;
@@ -116,9 +142,9 @@ public class ModelController {
             public void run() {
                 mWaitToParseCount++;
 
-                ChannelGroup channelGroup = YahooTvTimeParser.parse(mCurrentGroup, getQueryDate(next));
-                attach(channelGroup, next);
-                notifyUpdate(next);
+                ChannelGroup channelGroup = YahooTvTimeParser.parse(mCurrentGroup, calendar);
+                attach(channelGroup, forward);
+                notifyUpdate(forward);
 
                 if (Utils.PROGRAM_DEBUG) {
                     for (Channel channel : channelGroup.getChannels().values()) {
@@ -132,15 +158,22 @@ public class ModelController {
 
             }
         }.start();
+
+        return true;
     }
 
-    private void parseMoreCustomDataFromHttp(final boolean next) {
+    private boolean parseMoreCustomDataFromHttp(final boolean next) {
         final Calendar calendar = getQueryDate(next);
         mWaitToParseCount = 0;
 
         if (mCustomSelectedTypes.size() == 0) {
             notifyUpdate(next);
-            return;
+            return false;
+        }
+
+        if (calendar.getTime().getTime() < mYahooLimitationStartDate.getTime() ||
+                calendar.getTime().getTime() >= mYahooLimitationEndDate.getTime()) {
+            return false;
         }
 
         for (final YahooTvConstant.Group group: mCustomSelectedTypes) {
@@ -168,6 +201,8 @@ public class ModelController {
                 }
             }.start();
         }
+
+        return true;
     }
 
     private void notifyUpdate(boolean next) {
@@ -191,12 +226,12 @@ public class ModelController {
         // clear all for custom type
         mChannelsGroup[YahooTvConstant.Group.THIRTEEN.getValue()-1] = null;
         mCustomSelectedChannels.clear();
+        mCustomSelectedTypes.clear();
         mCustomSelectedChannels.addAll(channels);
         updateCustomTypes(channelTypeCount);
     }
 
     private void updateCustomTypes(int[] channelTypeCount) {
-        mCustomSelectedTypes.clear();
         for (int i = 0; i < YahooTvConstant.sChannelMapping.length; i++) {
             if (channelTypeCount[i] > 0) {
                 mCustomSelectedTypes.add(YahooTvConstant.Group.convertToGroup(i+1));
@@ -208,8 +243,6 @@ public class ModelController {
         mCurrentGroup = null;
         mChannelsGroup = null;
         mChannelsGroup = new ChannelGroup[YahooTvConstant.Group.values().length];
-        mCustomSelectedChannels.clear();
-        mCustomSelectedTypes.clear();
         sInstance = null;
     }
 }

@@ -22,7 +22,6 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
@@ -34,10 +33,12 @@ import tv.hillsbrad.com.model.Channel;
 import tv.hillsbrad.com.model.ChannelGroup;
 import tv.hillsbrad.com.model.Program;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
@@ -51,9 +52,8 @@ public class MainActivity extends AppCompatActivity {
     private HorizontalScrollView mProgramScrollView;
     private FrameLayout mTimeIndicatorFrameLayout;
 
-    private Spinner mTypeSpinner;
-    private ImageButton mPreviousButton;
-    private ImageButton mNextButton;
+    private Spinner mChannelGroupTypeSpinner;
+    private Spinner mDaySpinner;
     private TextView mTimeIndicatorTextView;
 
     private boolean mIsProcessing;
@@ -116,25 +116,55 @@ public class MainActivity extends AppCompatActivity {
         mChannelGroupContentLayout = (LinearLayout) findViewById(R.id.channel_group_content_layout);
         mTimeSliceLayout = (LinearLayout) findViewById(R.id.time_slice_layout);
         mProgramScrollView = (HorizontalScrollView) findViewById(R.id.program_scroll_view);
+
+        mProgramScrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
+            @Override
+            public void onScrollChanged() {
+                int x = mProgramScrollView.getScrollX();
+
+                if (!mIsProcessing) {
+                    if (x > (mTimeSliceLayout.getMeasuredWidth() * 0.9)) {
+                        Log.d("alexx", x + " > " + mTimeSliceLayout.getMeasuredWidth() * 0.9);
+                        searchMore(true);
+                    } else if (x < (mTimeSliceLayout.getMeasuredWidth() * 0.1)) {
+                        Log.d("alexx", x + " < " + mTimeSliceLayout.getMeasuredWidth() * 0.1);
+                        searchMore(false);
+                    }
+                }
+            }
+        });
+
         mProgramScrollView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
-                    case MotionEvent.ACTION_UP:
-                        int x = v.getScrollX();
-                        int width = v.getWidth();
-                        int measureWidth = mProgramScrollView.getChildAt(0).getMeasuredWidth();
-
+                    case MotionEvent.ACTION_DOWN:
+                        Log.d("alexx", "ACTION_DWON");
                         if (mBasicMeasureViewWidth == -1) {
                             mBasicMeasureViewWidth = mTimeSliceLayout.getChildAt(0).getMeasuredWidth() * 2;
                         }
-
-                        if (x == 0) {
-                            searchMore(false);
-                        } else if (x + width >= measureWidth) {
-                            searchMore(true);
-                        }
                         break;
+//                    case MotionEvent.ACTION_UP:
+//                        if (mBasicMeasureViewWidth == -1) {
+//                            mBasicMeasureViewWidth = mTimeSliceLayout.getChildAt(0).getMeasuredWidth() * 2;
+//                        }
+//
+//                        Log.d("alexx", "ACTION_UP: " + v.getScrollX() + ", " + v.getScrollY());
+//
+//                        int x = v.getScrollX();
+//                        int width = v.getWidth();
+//                        int measureWidth = mProgramScrollView.getChildAt(0).getMeasuredWidth();
+//                        if (x == 0) {
+//                            Log.d("alexx", "search backward");
+//                            searchMore(false);
+//                        } else if (x + width >= measureWidth) {
+//                            Log.d("alexx", "search forward");
+//                            searchMore(true);
+//                        }
+//                        break;
+//                    case MotionEvent.ACTION_MOVE:
+//                        Log.d("alexx", "current location: " + v.getScrollX() + ", " + v.getScrollY());
+//                        break;
                 }
                 return false;
             }
@@ -142,25 +172,9 @@ public class MainActivity extends AppCompatActivity {
         mTimeIndicatorFrameLayout = (FrameLayout) findViewById(R.id.time_indicator_framelayout);
         mTimeIndicatorTextView = (TextView) findViewById(R.id.time_indicator_textview);
 
-        mTypeSpinner = (Spinner) findViewById(R.id.type_spinner);
+        mChannelGroupTypeSpinner = (Spinner) findViewById(R.id.channel_group_type_spinner);
+        mDaySpinner = (Spinner) findViewById(R.id.day_spinner);
         initSpinner();
-
-        mPreviousButton = (ImageButton) findViewById(R.id.previous_button);
-        mPreviousButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                searchMore(false);
-            }
-        });
-        mNextButton = (ImageButton) findViewById(R.id.next_button);
-        mNextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                searchMore(true);
-            }
-        });
-
-        searchMore(true);
     }
 
     @Override
@@ -168,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, mIntentFilter);
+        searchMore(true);
     }
 
     @Override
@@ -184,16 +199,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void initSpinner() {
-        ArrayList<String> channels2 = new ArrayList<>();
-        String[] channels = new String[YahooTvConstant.CHANNEL_TYPE.length];
+        // channel group
+        ArrayList<String> channels = new ArrayList<>();
         for (int i = 0; i < YahooTvConstant.CHANNEL_TYPE.length; i++) {
-            channels[i] = getString(YahooTvConstant.CHANNEL_TYPE[i]);
-            channels2.add(getString(YahooTvConstant.CHANNEL_TYPE[i]));
+            channels.add(getString(YahooTvConstant.CHANNEL_TYPE[i]));
         }
 
-        CustomSpinnerAdapter customSpinnerAdapter = new CustomSpinnerAdapter(this, channels2);
-        mTypeSpinner.setAdapter(customSpinnerAdapter);
-        mTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        CustomSpinnerAdapter customSpinnerAdapter = new CustomSpinnerAdapter(this, channels);
+        mChannelGroupTypeSpinner.setAdapter(customSpinnerAdapter);
+        mChannelGroupTypeSpinner.setSelection(mModelController.getCurrentGroup().getValue() - 1, true);
+        mChannelGroupTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (!mIsProcessing) {
@@ -206,30 +221,69 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
+            public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        mTypeSpinner.setSelection(mModelController.getCurrentGroup().getValue() - 1, true);
+        // day
+        ArrayList<String> days = new ArrayList<>();
+        ArrayList<String> daysOfWeek = new ArrayList<>();
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, -1);
+        GregorianCalendar yahooLimitation = new GregorianCalendar(calendar.get(Calendar.YEAR),
+                                                                  calendar.get(Calendar.MONTH),
+                                                                  calendar.get(Calendar.DAY_OF_MONTH));
+        Date limitationStart = yahooLimitation.getTime();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd");
+        for (int i = 0; i < 6; i++) {
+            int day = calendar.get(Calendar.DAY_OF_WEEK);
+            days.add(sdf.format(calendar.getTime()));
+            daysOfWeek.add(Utils.convertDayOfWeek(day));
+            calendar.add(Calendar.DATE, 1);
+        }
+
+        yahooLimitation.set(Calendar.YEAR, calendar.get(Calendar.YEAR));
+        yahooLimitation.set(Calendar.MONTH, calendar.get(Calendar.MONTH));
+        yahooLimitation.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH));
+        mModelController.setYahooLimitationDate(limitationStart, yahooLimitation.getTime());
+
+        CustomSpinnerAdapter customSpinnerAdapter2 = new CustomSpinnerAdapter(this, days, daysOfWeek);
+        mDaySpinner.setAdapter(customSpinnerAdapter2);
+        mDaySpinner.setSelection(1, true);
+        mDaySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (view.getTag() != null) {
+                    String[] date = view.getTag().toString().split("/");
+                    mModelController.setSearchDate(Integer.valueOf(date[0]), Integer.valueOf(date[1]));
+                    searchMore(true);
+                } else {
+                    Log.d("alexx", "tag is null");
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
     }
 
     public void search(final boolean next) {
-        mModelController.parseMoreDataFromHttp(next);
+        boolean querySuccess = mModelController.parseMoreDataFromHttp(next);
+        if (!querySuccess) {
+            Log.d("alexx", "out of range");
+
+            lockUI(false);
+        }
     }
 
     public void searchMore(boolean next) {
         synchronized (this) {
             if (!mIsProcessing) {
-                mIsProcessing = true;
-                mPreviousButton.setEnabled(false);
-                mNextButton.setEnabled(false);
-                mTypeSpinner.setEnabled(false);
-
+                lockUI(true);
                 search(next);
             } else {
+                // FIXME need to add progress bar
                 Log.d(Utils.TAG, "search is processing");
             }
         }
@@ -417,58 +471,71 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
-                    /** time indicator (vertical divider) **/
-                    // FIXME the added view can be drawn with frame layout have at least 3 child
-                    if (mTimeIndicatorFrameLayout.getChildCount() > 2) {
-                        mTimeIndicatorFrameLayout.removeViewAt(0);
-                    }
                     calendar = Calendar.getInstance();
-                    int marginStart = Utils.getEmptySliceWidth(
-                            channelGroup.getSearchingStartDate(), calendar.getTime());
-                    View view = new View(MainActivity.this);
-                    FrameLayout.LayoutParams param = new FrameLayout.LayoutParams(
-                            5, ViewGroup.LayoutParams.MATCH_PARENT);
-                    param.setMarginStart(marginStart);
-                    view.setLayoutParams(param);
-                    view.setBackgroundColor(Color.rgb(0x66, 0x66, 0x66));
-                    mTimeIndicatorFrameLayout.addView(view, 0);
-
-                    /** time indicator (current time mark) **/
-                    LinearLayout.LayoutParams params2 = (LinearLayout.LayoutParams) mTimeIndicatorTextView.getLayoutParams();
-                    params2.setMarginStart(0);
-                    mTimeIndicatorTextView.setLayoutParams(params2);
-                    mTimeIndicatorTextView.setTag(marginStart);
-                    ViewTreeObserver vto2 = mTimeIndicatorTextView.getViewTreeObserver();
-                    vto2.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                        @Override
-                        public void onGlobalLayout() {
-                            mTimeIndicatorTextView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                            int marginStart = (int) mTimeIndicatorTextView.getTag() - (mTimeIndicatorTextView.getMeasuredWidth() / 2);
-                            if (marginStart < 0) {
-                                marginStart = 0;
-                            } else if ((marginStart + mTimeIndicatorTextView.getMeasuredWidth())
-                                    > mTimeSliceLayout.getMeasuredWidth()) {
-                                marginStart = mTimeSliceLayout.getMeasuredWidth() - mTimeIndicatorTextView.getMeasuredWidth();
-                            }
-                            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mTimeIndicatorTextView.getLayoutParams();
-                            params.setMarginStart(marginStart);
-                            mTimeIndicatorTextView.setLayoutParams(params);
+                    Date current = calendar.getTime();
+                    if (current.getTime() >= channelGroup.getSearchingStartDate().getTime() &&
+                            current.getTime() <= channelGroup.getSearchingEndDate().getTime()) {
+                        /** time indicator (vertical divider) **/
+                        // FIXME the added view can be drawn with frame layout have at least 3 child
+                        if (mTimeIndicatorFrameLayout.getChildCount() > 2) {
+                            mTimeIndicatorFrameLayout.removeViewAt(0);
                         }
-                    });
+
+                        int marginStart = Utils.getEmptySliceWidth(
+                                channelGroup.getSearchingStartDate(), current);
+                        View view = new View(MainActivity.this);
+                        FrameLayout.LayoutParams param = new FrameLayout.LayoutParams(
+                                5, ViewGroup.LayoutParams.MATCH_PARENT);
+                        param.setMarginStart(marginStart);
+                        view.setLayoutParams(param);
+                        view.setBackgroundColor(Color.rgb(0x66, 0x66, 0x66));
+                        mTimeIndicatorFrameLayout.addView(view, 0);
+
+                        /** time indicator (current time mark) **/
+                        LinearLayout.LayoutParams params2 = (LinearLayout.LayoutParams) mTimeIndicatorTextView.getLayoutParams();
+                        params2.setMarginStart(0);
+                        mTimeIndicatorTextView.setVisibility(View.VISIBLE);
+                        mTimeIndicatorTextView.setLayoutParams(params2);
+                        mTimeIndicatorTextView.setTag(marginStart);
+                        ViewTreeObserver vto2 = mTimeIndicatorTextView.getViewTreeObserver();
+                        vto2.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                            @Override
+                            public void onGlobalLayout() {
+                                mTimeIndicatorTextView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                                int marginStart = (int) mTimeIndicatorTextView.getTag() - (mTimeIndicatorTextView.getMeasuredWidth() / 2);
+                                if (marginStart < 0) {
+                                    marginStart = 0;
+                                } else if ((marginStart + mTimeIndicatorTextView.getMeasuredWidth())
+                                        > mTimeSliceLayout.getMeasuredWidth()) {
+                                    marginStart = mTimeSliceLayout.getMeasuredWidth() - mTimeIndicatorTextView.getMeasuredWidth();
+                                }
+                                LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mTimeIndicatorTextView.getLayoutParams();
+                                params.setMarginStart(marginStart);
+                                mTimeIndicatorTextView.setLayoutParams(params);
+                            }
+                        });
+                    } else {
+                        // out of range
+                        if (mTimeIndicatorFrameLayout.getChildCount() > 2) {
+                            mTimeIndicatorFrameLayout.removeViewAt(0);
+                        }
+                        mTimeIndicatorTextView.setVisibility(View.GONE);
+                    }
                 }
 
                 if (!next && mBasicMeasureViewWidth != -1) {
                     mProgramScrollView.setScrollX(mBasicMeasureViewWidth);
                 }
 
-                synchronized (MainActivity.this) {
-                    mIsProcessing = false;
-                }
-                mPreviousButton.setEnabled(true);
-                mNextButton.setEnabled(true);
-                mTypeSpinner.setEnabled(true);
+                lockUI(false);
             }
         });
+    }
+
+    private synchronized void lockUI(boolean enable) {
+        mIsProcessing = enable;
+        mChannelGroupTypeSpinner.setEnabled(!enable);
+        mDaySpinner.setEnabled(!enable);
     }
 
     @Override
@@ -501,19 +568,25 @@ public class MainActivity extends AppCompatActivity {
     class CustomSpinnerAdapter extends BaseAdapter implements SpinnerAdapter {
 
         private final Context activity;
-        private ArrayList<String> asr;
+        private ArrayList<String> mFirstTexts;
+        private ArrayList<String> mSecondTexts;
 
-        public CustomSpinnerAdapter(Context context, ArrayList<String> asr) {
-            this.asr = asr;
+        public CustomSpinnerAdapter(Context context, ArrayList<String> firstTexts) {
+            mFirstTexts = firstTexts;
             activity = context;
         }
 
+        public CustomSpinnerAdapter(Context context, ArrayList<String> firstTexts, ArrayList<String> secondTexts) {
+            this(context, firstTexts);
+            mSecondTexts = secondTexts;
+        }
+
         public int getCount() {
-            return asr.size();
+            return mFirstTexts.size();
         }
 
         public Object getItem(int i) {
-            return asr.get(i);
+            return mFirstTexts.get(i);
         }
 
         public long getItemId(int i) {
@@ -522,25 +595,40 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public View getDropDownView(int position, View convertView, ViewGroup parent) {
-            TextView txt = new TextView(MainActivity.this);
-            txt.setPadding(10, 10, 10, 10);
-            txt.setTextSize(16);
-            txt.setGravity(Gravity.CENTER_VERTICAL);
-            txt.setText(asr.get(position));
-            txt.setTextColor(Color.parseColor("#000000"));
-            return  txt;
+            if (convertView == null) {
+                convertView = new TextView(MainActivity.this);
+                convertView.setPadding(0, 10, 0, 10);
+                ((TextView) convertView).setTextSize(16);
+                ((TextView) convertView).setGravity(Gravity.CENTER);
+                ((TextView) convertView).setTextColor(Color.BLACK);
+            }
+            if (mSecondTexts == null) {
+                ((TextView) convertView).setText(mFirstTexts.get(position));
+            } else {
+                ((TextView) convertView).setText(mFirstTexts.get(position) + mSecondTexts.get(position));
+                convertView.setTag(mFirstTexts.get(position));
+            }
+
+            return convertView;
         }
 
-        public View getView(int i, View view, ViewGroup viewgroup) {
-            TextView txt = new TextView(MainActivity.this);
-            txt.setGravity(Gravity.CENTER);
-            txt.setPadding(16, 5, 16, 5);
-            txt.setTextSize(16);
-            txt.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_down, 0);
-            txt.setText(asr.get(i));
-            txt.setTextColor(Color.parseColor("#000000"));
-            return  txt;
-        }
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = new TextView(MainActivity.this);
+                convertView.setPadding(15, 5, 0, 5);
+                ((TextView) convertView).setTextSize(16);
+                ((TextView) convertView).setGravity(Gravity.CENTER);
+                ((TextView) convertView).setTextColor(Color.BLACK);
+                ((TextView) convertView).setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_down, 0);
+            }
+            if (mSecondTexts == null) {
+                ((TextView) convertView).setText(mFirstTexts.get(position));
+            } else {
+                ((TextView) convertView).setText(mFirstTexts.get(position) + " " + mSecondTexts.get(position));
+                convertView.setTag(mFirstTexts.get(position));
+            }
 
+            return convertView;
+        }
     }
 }
