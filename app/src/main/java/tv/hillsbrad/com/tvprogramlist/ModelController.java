@@ -9,6 +9,9 @@ import tv.hillsbrad.com.App;
 import tv.hillsbrad.com.Utils;
 import tv.hillsbrad.com.model.Channel;
 import tv.hillsbrad.com.model.Program;
+import tv.hillsbrad.com.modelTest.FakeProgram;
+import tv.hillsbrad.com.modelTest.FakeProgram2;
+import tv.hillsbrad.com.modelTest.FakeProgram3;
 import tv.hillsbrad.com.yahoo.YahooTvConstant;
 import tv.hillsbrad.com.model.ChannelGroup;
 import tv.hillsbrad.com.yahoo.YahooTvTimeParser;
@@ -23,6 +26,10 @@ import java.util.LinkedHashSet;
  * Created by alex on 6/27/16.
  */
 public class ModelController {
+
+    public interface ChannelContentChangedListener {
+        void onUpdate(ChannelGroup channelGroup, boolean forward);
+    }
 
     private static ModelController sInstance;
 
@@ -41,6 +48,8 @@ public class ModelController {
 
     private int mWaitToParseCount;
 
+    private ArrayList<ChannelContentChangedListener> mContentChangedListeners;
+
     public static ModelController getInstance(Context context) {
         if (sInstance == null) {
             sInstance = new ModelController(context);
@@ -49,8 +58,8 @@ public class ModelController {
     }
 
     private ModelController(Context context) {
+        mContentChangedListeners = new ArrayList<>();
         mCurrentGroup = Utils.loadCurrentGroup(context);
-
         mChannelsGroup = new ChannelGroup[YahooTvConstant.Group.values().length];
         mCustomSelectedChannels = new LinkedHashSet<>();
         mCustomSelectedTypes = new ArrayList<>();
@@ -107,6 +116,10 @@ public class ModelController {
     private Calendar getQueryDate(boolean forward) {
         Calendar calendar = Calendar.getInstance();
 
+        // test
+//        calendar.set(2016, 6, 30, 22, 5);
+
+
         if (mSpecificMonth != -1 && mSpecificDay != -1) {
             calendar.set(Calendar.MONTH, mSpecificMonth - 1);
             calendar.set(Calendar.DAY_OF_MONTH, mSpecificDay);
@@ -126,9 +139,42 @@ public class ModelController {
         return calendar;
     }
 
-    public boolean parseMoreDataFromHttp(final boolean forward) {
+    // use for fake data
+    static boolean initialFake = false;
+    public boolean parseMoreDataFromHttp(final boolean forward, final boolean isFromSlide) {
+
+        if (Utils.USE_FAKE_DATE_DEBUG) {
+            if (Utils.REFRESH_UI_ON_PARSE_NEW_CONTENT || !initialFake) {
+                if (!Utils.REFRESH_UI_ON_PARSE_NEW_CONTENT) {
+                    initialFake = !initialFake;
+                }
+
+                Log.d(Utils.TMP_TAG, "parseMoreDataFromHttp refresh");
+
+                ChannelGroup channelGroup = FakeProgram2.getFakeData(forward);
+
+                if (channelGroup != null) {
+                    attach(channelGroup, forward);
+                    notifyUpdate(forward);
+                }
+            } else {
+                Log.d(Utils.TMP_TAG, "parseMoreDataFromHttp onUpdate");
+
+                ChannelGroup channelGroup = FakeProgram2.getFakeData(forward);
+                if (channelGroup != null) {
+                    attach(channelGroup, forward);
+                    for (ChannelContentChangedListener l : mContentChangedListeners) {
+                        l.onUpdate(channelGroup, forward);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+
         if (mCurrentGroup == YahooTvConstant.Group.THIRTEEN) {  // custom type
-            return parseMoreCustomDataFromHttp(forward);
+            return parseMoreCustomDataFromHttp(forward, isFromSlide);
         }
 
         final Calendar calendar = getQueryDate(forward);
@@ -144,16 +190,22 @@ public class ModelController {
 
                 ChannelGroup channelGroup = YahooTvTimeParser.parse(mCurrentGroup, calendar);
                 attach(channelGroup, forward);
-                notifyUpdate(forward);
 
                 if (Utils.PROGRAM_DEBUG) {
                     for (Channel channel : channelGroup.getChannels().values()) {
                         Log.d(Utils.TAG, channel.getTitle());
                         for (Program program : channel.getPrograms()) {
-                            Log.d(Utils.TAG, program.getTitle() + " / " + program.getStartDate()
-                                    + " / " + program.getEndDate());
+                            Log.d(Utils.TAG, program.toString());
                         }
                     }
+                }
+
+                if (!Utils.REFRESH_UI_ON_PARSE_NEW_CONTENT && isFromSlide) {
+                    for (ChannelContentChangedListener l: mContentChangedListeners) {
+                        l.onUpdate(channelGroup, forward);
+                    }
+                } else {
+                    notifyUpdate(forward);
                 }
 
             }
@@ -162,12 +214,12 @@ public class ModelController {
         return true;
     }
 
-    private boolean parseMoreCustomDataFromHttp(final boolean next) {
-        final Calendar calendar = getQueryDate(next);
+    private boolean parseMoreCustomDataFromHttp(final boolean forward, final boolean isFromSlide) {
+        final Calendar calendar = getQueryDate(forward);
         mWaitToParseCount = 0;
 
         if (mCustomSelectedTypes.size() == 0) {
-            notifyUpdate(next);
+            notifyUpdate(forward);
             return false;
         }
 
@@ -186,7 +238,7 @@ public class ModelController {
 
                     HashSet<String> notSelected = new HashSet<>();
                     ChannelGroup channelGroup = YahooTvTimeParser.parse(group, calendar);
-                    attach(group, channelGroup, next);
+                    attach(group, channelGroup, forward);
 
                     for (String channelTitle: channelGroup.getChannels().keySet()) {
                         if (!mCustomSelectedChannels.contains(channelTitle)) {
@@ -196,8 +248,24 @@ public class ModelController {
                         }
                     }
                     channelGroup.removeChannels(notSelected);
-                    attach(channelGroup, next);
-                    notifyUpdate(next);
+                    attach(channelGroup, forward);
+
+                    if (isFromSlide) {
+                        for (ChannelContentChangedListener l: mContentChangedListeners) {
+                            l.onUpdate(channelGroup, forward);
+                        }
+                    } else {
+                        notifyUpdate(forward);
+                    }
+
+                    if (Utils.PROGRAM_DEBUG) {
+                        for (Channel channel : channelGroup.getChannels().values()) {
+                            Log.d(Utils.TAG, channel.getTitle());
+                            for (Program program : channel.getPrograms()) {
+                                Log.d(Utils.TAG, program.toString());
+                            }
+                        }
+                    }
                 }
             }.start();
         }
@@ -239,10 +307,24 @@ public class ModelController {
         }
     }
 
+    public void addContentChangedListener(ChannelContentChangedListener l) {
+        mContentChangedListeners.add(l);
+    }
+
+    public void removeContentChangedListener(ChannelContentChangedListener l) {
+        mContentChangedListeners.remove(l);
+    }
+
     public void clear() {
         mCurrentGroup = null;
         mChannelsGroup = null;
         mChannelsGroup = new ChannelGroup[YahooTvConstant.Group.values().length];
         sInstance = null;
+
+        // fake data reset
+        initialFake = false;
+        FakeProgram.generateFakeData();
+        FakeProgram2.generateFakeData();
+        FakeProgram3.generateFakeData();
     }
 }

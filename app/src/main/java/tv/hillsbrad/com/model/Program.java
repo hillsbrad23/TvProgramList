@@ -95,7 +95,8 @@ public class Program {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(mTitle + " / " + getRuntime() + " / " + mStartDate + " / " + mEndDate);
+        builder.append(mTitle + " / " + getRuntime() + " / " + getTime());
+//        builder.append(mTitle + " / " + getRuntime() + " / " + mStartDate + " / " + mEndDate);
         return builder.toString();
     }
 

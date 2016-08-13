@@ -24,8 +24,13 @@ import java.util.concurrent.TimeUnit;
 public class Utils {
 
     public static String TAG = "alexx";
+    public static String TMP_TAG = "alexx";
+
     public static boolean PROGRAM_DEBUG = false;
     public static boolean YAHOO_ERROR_DEBUG = false;
+
+    public static boolean USE_FAKE_DATE_DEBUG = false;
+    public static boolean REFRESH_UI_ON_PARSE_NEW_CONTENT = true;
 
 
     public static int dip2px(Context context, float dpValue) {
