@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements ModelController.C
 
     // for test
     private Button mClearButton;
+    private Button mVideoButton;
 
     private ModelController mModelController;
 
@@ -108,6 +109,17 @@ public class MainActivity extends AppCompatActivity implements ModelController.C
                 mModelController.setCurrentGroup(current);
                 mViewController.clear();
                 searchMore(true, false);
+            }
+        });
+
+        // for test
+        mVideoButton = (Button) findViewById(R.id.launch_video_view_button);
+        mVideoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent();
+                intent.setClass(MainActivity.this, VideoActivity.class);
+                startActivity(intent);
             }
         });
 
